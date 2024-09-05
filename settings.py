@@ -1,9 +1,9 @@
-
-
-# Гиперпараметры
+# Буфер-параметры
 BUFFER_SIZE = 100_000
 BATCH_SIZE  = 256
+ALPHA = 0.6
 
+# Гиперпараметры
 GAMMA = 0.999# 99
 TAU   = 0.01
 NOISE = 0.1
@@ -32,6 +32,5 @@ EP_STEPS = 2000
 TEST_EPISODES = 100
 TEST_EP_STEPS = 200
 
-ALPHA = 0.6
-
+# Параметры моделей
 SEED = 200
