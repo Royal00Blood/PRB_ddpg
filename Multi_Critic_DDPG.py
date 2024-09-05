@@ -7,7 +7,7 @@ import os
 from settings import (STATE_SIZE, ACTION_SIZE, LR_ACTOR,
                       LR_CRITIC,BATCH_SIZE,GAMMA,BUFFER_SIZE,
                       ALPHA,TAU,EPISODES,EP_STEPS,TEST_EP_STEPS,
-                      TEST_EPISODES)
+                      TEST_EPISODES, NOISE)
 from torch.utils.tensorboard import SummaryWriter
 from torchrl.modules import DdpgMlpQNet, DdpgCnnActor, DdpgCnnQNet, DdpgMlpActor
 from torchrl.data import PrioritizedReplayBuffer, TensorDictPrioritizedReplayBuffer
@@ -57,13 +57,11 @@ class PRB_DDPG_Agent:
             return
        
         states, actions, rewards, next_states, dones = zip(*transitions)
-        st_noise = noise()
-        ac_noise = noise(self.action_size, mu=0.0, theta=0.15, sigma=0.1)
-        nx_st_noise = noise(self.state_size,  mu=0.0, theta=0.15, sigma=0.1)
-        states = torch.tensor(states + st_noise, dtype=torch.float32)
-        actions = torch.tensor(actions + ac_noise, dtype=torch.float32)
+    
+        states = torch.tensor(states + np.random.normal(0, NOISE, size=self.state_size), dtype=torch.float32)
+        actions = torch.tensor(actions + np.random.normal(0, NOISE, size=self.action_size), dtype=torch.float32)
+        next_states = torch.tensor(next_states + np.random.normal(0, NOISE, size=self.state_size), dtype=torch.float32)
         rewards = torch.tensor(rewards, dtype=torch.float32)
-        next_states = torch.tensor(next_states + nx_st_noise, dtype=torch.float32)
         dones = torch.tensor(dones, dtype=torch.float32)
         weights = torch.tensor(weights, dtype=torch.float32)
 
@@ -124,18 +122,22 @@ class PRB_DDPG_Agent:
             done = False
             episode_reward = 0
             env.set_number(episode)
-            
+            i=0
             while not done:
-            # for _ in range(ep_steps):
+            # for i in range(ep_steps):
                 action = self.actor(torch.tensor(state, dtype=torch.float32)).detach().numpy()
                 next_state, reward, done, _ = env.step(action)
-                
+                i+=1
+                if i>700:
+                    reward = -2000
+                    done = True
                 self.replay_buffer.push(state, action, reward, next_state, done)
                 if len(self.replay_buffer) > self.batch_size:
                     self.update()
-
                 state = next_state
                 episode_reward += reward
+                # if done:
+                #     break
             episode_rewards.append(episode_reward)
             avg_reward = np.mean(episode_rewards[-100:])
             

@@ -2,13 +2,13 @@
 
 # Гиперпараметры
 BUFFER_SIZE = 1000
-BATCH_SIZE  = 64
+BATCH_SIZE  = 256
 
-GAMMA = 0.99
+GAMMA = 0.97# 99
 TAU   = 0.001
-
-LR_ACTOR  = 0.001
-LR_CRITIC = 0.0001
+NOISE = 0.1
+LR_ACTOR  = 0.0001
+LR_CRITIC = 0.001
 
 # Параметры среды
 STATE_SIZE  = 7
@@ -25,7 +25,7 @@ TIME = 0.1
 
 # Параметры обучения
 EPISODES = 6000
-EP_STEPS = 20
+EP_STEPS = 2000
 
 #  Параметры проверки
 TEST_EPISODES = 100

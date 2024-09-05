@@ -49,7 +49,7 @@ class CustomEnv(gym.Env):
         self.__move = action #[v, w]
         self.state = self.__calculate_state()
         # Проверяем, завершен ли эпизод
-        self.done, goal = self.__check_done()
+        goal = self.__check_done()
         # Вычисляем награду
         self.__reward = self.__new_reward(goal)
         return self.state, self.__reward, self.done, {}
@@ -96,9 +96,9 @@ class CustomEnv(gym.Env):
         self.__old_position_robot = [self.__position_robot[0], self.__position_robot[1]]
         
         if dist_new < dist_old:
-            return 1
+            return 17
         else:
-            return 0#-17
+            return -17
            
     def __angle_reward(self):
         self.__delta_angle = d_ang(self.__position_robot[0], self.__position_robot[1],
@@ -107,26 +107,29 @@ class CustomEnv(gym.Env):
                                    ).get_angle_dev()
 
         if self.__delta_angle == 0.0:
-            return 1#17
-        # elif abs(self.__delta_angle) < np.pi / 2 and abs(self.__delta_angle) < abs(self.__delta_angle_old):
-        #     return -10.83 * self.__delta_angle + 17
+            return 17
+        elif abs(self.__delta_angle) < np.pi / 2 and abs(self.__delta_angle) < abs(self.__delta_angle_old):
+            return -10.83 * self.__delta_angle + 17
         else:
-            return 0#17
+            return -17
               
     def __check_done(self):
         goal = False
         if( - AREA_DEFEAT > self.__position_robot[0] or self.__position_robot[0] > AREA_DEFEAT  or
             - AREA_DEFEAT > self.__position_robot[1] or self.__position_robot[1] > AREA_DEFEAT):
             goal = False
-            
-            return True, goal
+            self.done = True
+            return goal
         elif ( self.__target_point[0] + AREA_WIN > self.__position_robot[0] > self.__target_point[0] - AREA_WIN   and
                self.__target_point[1] + AREA_WIN > self.__position_robot[1] > self.__target_point[1] - AREA_WIN):
             goal = True
-            self.graf_move()
-            return True, goal
+            self.done = True
+            # self.graf_move()
+            print("Target_True")
+            return  goal
         else:
-            return False, goal
+            self.done = False
+            return goal
                 
     def set_number(self,number):
         self.__number = number
