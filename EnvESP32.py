@@ -8,6 +8,25 @@ import random
 from DistanceBW2points import DistanceBW2points
 from deviation_angle import DeviationAngle as d_ang
 import matplotlib.pyplot as plt
+import pickle
+import socket
+import struct
+import time
+
+BUFFER_SIZE = 4096
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+sock.bind(("", 6666))# vicon
+sock.listen(1)
+print('Sock name: {}'.format(sock.getsockname()))
+conn, addr = sock.accept()
+print('Connected:', addr)
+all_data = bytearray()
+
+esp32_ip = '172.20.10.10'  # IP-адрес ESP32 в вашей сети
+esp32_port = 111
+client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client_socket.connect((esp32_ip, esp32_port))
+timer_ANN = time.perf_counter()
 
 class CustomEnv(gym.Env):
     def __init__(self):
@@ -32,10 +51,11 @@ class CustomEnv(gym.Env):
         self.__move           = np.zeros(2) # [velocity, angular velocity]
         self.__robot_quat     = np.zeros(4) # Quaternions [Qx, Qy, Qz, Qw]
         
-        while(1):
-            self.__target_point = [random.uniform(-AREA_GENERATION,AREA_GENERATION), random.uniform(-AREA_GENERATION,AREA_GENERATION)] # Target point [x, y]
-            if (self.__target_point[0] != 0 or self.__target_point[1] != 0):
-                break
+        self.__target_point = [0.6,-0.9]
+        # while(1):
+        #     self.__target_point = [random.uniform(-AREA_GENERATION,AREA_GENERATION), random.uniform(-AREA_GENERATION,AREA_GENERATION)] # Target point [x, y]
+        #     if (self.__target_point[0] != 0 or self.__target_point[1] != 0):
+        #         break
             
         self.__old_target_point = self.__target_point
         self.__old_position_robot = 0.0
@@ -47,33 +67,39 @@ class CustomEnv(gym.Env):
     def step(self, action):
         # Применяем действие к состоянию и получаем новое состояние
         self.__move = action #[v, w]
-        self.state = self.__calculate_state()
+        print()
+        self.__send_to_esp(action[0], action[1])
+        self.state = self.__get_state()
         # Проверяем, завершен ли эпизод
         self.done, goal = self.__check_done()
         # Вычисляем награду
         self.__reward = self.__new_reward(goal)
         return self.state, self.__reward, self.done, {}
     
-    def __calculate_state(self):
-        self.__d_angl_rad += (self.__move[1] * TIME)  # изменение угла в радианах
-        # The position of the robot [x, y]
-        self.__position_robot[0] += self.__move[0] * np.cos(self.__d_angl_rad) * TIME
-        self.__position_robot[1] += self.__move[0] * np.sin(self.__d_angl_rad) * TIME
-        # Quaternions [Qx, Qy, Qz, Qw]
-        self.__robot_quat[0] = 0.0
-        self.__robot_quat[1] = 0.0
-        self.__robot_quat[2] = 1 * np.sin(self.__d_angl_rad / 2)
-        self.__robot_quat[3] = np.cos(self.__d_angl_rad / 2)
-        self.__x_list.append(self.__position_robot[0])
-        self.__y_list.append(self.__position_robot[1])
+    def __get_state(self):
+        data = conn.recv(BUFFER_SIZE)
+        # print('Recv: {}: {}'.format(len(data), data))
+        data_vicon = pickle.loads(data) # [x_rob, y_rob, 
+                                        #  robot_quat_x, robot_quat_y,
+                                        #  robot_quat_z, robot_quat_w]
+        print(data_vicon)
+        self.__position_robot[0], self.__position_robot[1]= data_vicon[0], data_vicon[1]
+        self.__robot_quat[2], self.__robot_quat[3] = data_vicon[2], data_vicon[3]
     
         return [self.__position_robot[0] , self.__position_robot[1],
                 self.__target_point[0]   , self.__target_point[1]  ,
                 self.__move[0]           , self.__move[1]          ,
-                self.__d_angl_rad]
+                self.__robot_quat[2]     , self.__robot_quat[3]    ]
+    
+    @staticmethod
+    def __send_to_esp(vel, angl_vel):
+        pack_data = struct.pack("ff", vel, angl_vel)
+        client_socket.sendall(pack_data)
+        
  
     def __new_reward(self, goal):
         if self.done:
+            self.__send_to_esp(0, 0)
             if goal:
                 return EP_STEPS
             else:
@@ -106,25 +132,26 @@ class CustomEnv(gym.Env):
                                    self.__d_angl_rad
                                    ).get_angle_dev()
 
-        if self.__delta_angle == 0.0:
-            return 1#17
+        if self.__delta_angle == 0.0: # 17 
+            return 1
         # elif abs(self.__delta_angle) < np.pi / 2 and abs(self.__delta_angle) < abs(self.__delta_angle_old):
         #     return -10.83 * self.__delta_angle + 17
         else:
-            return 0#17
+            return 0
               
     def __check_done(self):
         goal = False
         if( - AREA_DEFEAT > self.__position_robot[0] or self.__position_robot[0] > AREA_DEFEAT  or
             - AREA_DEFEAT > self.__position_robot[1] or self.__position_robot[1] > AREA_DEFEAT):
             goal = False
-            
             return True, goal
+        
         elif ( self.__target_point[0] + AREA_WIN > self.__position_robot[0] > self.__target_point[0] - AREA_WIN   and
                self.__target_point[1] + AREA_WIN > self.__position_robot[1] > self.__target_point[1] - AREA_WIN):
             goal = True
             self.graf_move()
             return True, goal
+        
         else:
             return False, goal
                 
