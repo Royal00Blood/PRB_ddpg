@@ -12,8 +12,9 @@ def hidden_init(layer):
     return (-lim, lim)
     
 class Actor(nn.Module):
-    def __init__(self, state_size, action_size):
+    def __init__(self, state_size = STATE_SIZE, action_size=ACTION_, seed=SEED):
         super(Actor, self).__init__()
+        self.seed = torch.manual_seed(seed)
         self.fc1 = nn.Linear(state_size, 256)
         self.fc2 = nn.Linear(256, 300)
         
