@@ -1,15 +1,15 @@
 # Буфер-параметры
 BUFFER_SIZE = 100_000
-BATCH_SIZE  = 256
+BATCH_SIZE  = 256 # 32 to 256
 ALPHA = 0.6
 
 # Гиперпараметры
-GAMMA = 0.999# 99
-TAU   = 0.01
-NOISE = 0.1
+GAMMA = 0.999# 0.9 to 0.999
+TAU   = 0.01 # 0.001 to 0.01
+NOISE = 0.1 # Гаусов шум 
 
-LR_ACTOR  = 0.0001
-LR_CRITIC = 0.001
+LR_ACTOR  = 0.0001 # 0.0001 to 0.001
+LR_CRITIC = 0.001 # 0.001 to 0.01
 
 # Параметры среды
 STATE_SIZE  = 7
