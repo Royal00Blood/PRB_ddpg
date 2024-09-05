@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch._dynamo
+import torch.nn.functional as F
 from settings import ACTION_, STATE_SIZE, SEED
 import numpy as np
 torch._dynamo.config.suppress_errors = True
@@ -28,23 +29,38 @@ class Actor(nn.Module):
         
         self.fc6v = nn.Linear(512, 1)
         self.fc6w = nn.Linear(512, 1)
+        self.reset_parameters()
+    
+    def reset_parameters(self):
+        self.fc1.weight.data.uniform_(*hidden_init(self.fc1))
+        self.fc2.weight.data.uniform_(*hidden_init(self.fc2))
+        
+        self.fc3v.weight.data.uniform_(*hidden_init(self.fc3v))
+        self.fc4v.weight.data.uniform_(*hidden_init(self.fc4v))
+        self.fc5v.weight.data.uniform_(*hidden_init(self.fc5v))
+        self.fc6v.weight.data.uniform_(-3e-3, 3e-3)
+        
+        self.fc3w.weight.data.uniform_(*hidden_init(self.fc3w))
+        self.fc4w.weight.data.uniform_(*hidden_init(self.fc4w))
+        self.fc5w.weight.data.uniform_(*hidden_init(self.fc5w))
+        self.fc6w.weight.data.uniform_(-3e-3, 3e-3)
         
     def forward(self, state):
     
-        x = torch.relu(self.fc1(state))
-        x = torch.relu(self.fc2(x))
+        x = F.relu(self.fc1(state))
+        x = F.relu(self.fc2(x))
         
-        v = torch.relu(self.fc3v(x))
-        v = torch.relu(self.fc4v(v))
-        v = torch.relu(self.fc5v(v))
+        v = F.relu(self.fc3v(x))
+        v = F.relu(self.fc4v(v))
+        v = F.relu(self.fc5v(v))
         v = self.bn5(v)
-        v = torch.tanh(self.fc6v(v))
+        v = F.tanh(self.fc6v(v))
         
-        w = torch.relu(self.fc3w(x))
-        w = torch.relu(self.fc4w(w))
-        w = torch.relu(self.fc5w(w))
+        w = F.relu(self.fc3w(x))
+        w = F.relu(self.fc4w(w))
+        w = F.relu(self.fc5w(w))
         w = self.bn5(w)
-        w = torch.tanh(self.fc6w(w))
+        w = F.tanh(self.fc6w(w))
         
         return torch.cat([v*ACTION_, w*ACTION_], dim=-1)
     
