@@ -20,12 +20,12 @@ class Actor(nn.Module):
     def __init__(self, state_size, action_size):
         super(Actor, self).__init__()
         self.fc1 = nn.Linear(state_size, 100)
-        self.dropout = nn.Dropout(0.2)
+        
         self.fc2 = nn.Linear(100, 150)
         
         self.fc3 = nn.Linear(150, 200)
         self.fc4 = nn.Linear(200, 250)
-        self.dropout3 = nn.Dropout(p=0.4)
+       
         
         self.fc5v = nn.Linear(250, 200)
         self.fc5w = nn.Linear(250, 200)
@@ -68,9 +68,9 @@ class Critic2(nn.Module):
     def __init__(self, state_size, action_size):
         super(Critic2, self).__init__()
         self.fc1 = nn.Linear(state_size + action_size, 500)
-        self.fc2 = nn.Linear(500, 600)
-        self.fc3 = nn.Linear(600, 300)
-        self.fc4 = nn.Linear(300, 1)
+        self.fc2 = nn.Linear(500, 512)
+        self.fc3 = nn.Linear(512, 500)
+        self.fc4 = nn.Linear(500, 1)
         
 
     def forward(self, state, action):

@@ -1,12 +1,13 @@
 
 
 # Гиперпараметры
-BUFFER_SIZE = 1000
+BUFFER_SIZE = 100_000
 BATCH_SIZE  = 256
 
-GAMMA = 0.97# 99
-TAU   = 0.001
+GAMMA = 0.999# 99
+TAU   = 0.01
 NOISE = 0.1
+
 LR_ACTOR  = 0.0001
 LR_CRITIC = 0.001
 
