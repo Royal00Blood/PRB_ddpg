@@ -31,11 +31,8 @@ class CustomEnv(gym.Env):
         self.__position_robot = np.zeros(2) # The position of the robot [x, y]
         self.__move           = np.zeros(2) # [velocity, angular velocity]
         self.__robot_quat     = np.zeros(4) # Quaternions [Qx, Qy, Qz, Qw]
-        
-        while(1):
-            self.__target_point = [random.uniform(-AREA_GENERATION,AREA_GENERATION), random.uniform(-AREA_GENERATION,AREA_GENERATION)] # Target point [x, y]
-            if (self.__target_point[0] >= 0.2 or self.__target_point[0] <= -0.2) or (self.__target_point[1] >= 0.2 or self.__target_point[1] <= -0.2):
-                break
+        self.__target_point =[random.choice(random.uniform(0.3,AREA_GENERATION), random.uniform(-AREA_GENERATION,-0.3)),
+                              random.choice(random.uniform(0.3,AREA_GENERATION), random.uniform(-AREA_GENERATION,-0.3))]
             
         self.__old_target_point = self.__target_point
         self.__old_position_robot = 0.0

@@ -122,22 +122,16 @@ class PRB_DDPG_Agent:
             done = False
             episode_reward = 0
             env.set_number(episode)
-            i=0
+
             while not done:
-            # for i in range(ep_steps):
                 action = self.actor(torch.tensor(state, dtype=torch.float32)).detach().numpy()
                 next_state, reward, done, _ = env.step(action)
-                # i+=1
-                # if i>700:
-                #     reward = -2000
-                #     done = True
+        
                 self.replay_buffer.push(state, action, reward, next_state, done)
                 if len(self.replay_buffer) > self.batch_size:
                     self.update()
                 state = next_state
                 episode_reward += reward
-                # if done:
-                #     break
             episode_rewards.append(episode_reward)
             avg_reward = np.mean(episode_rewards[-100:])
             
