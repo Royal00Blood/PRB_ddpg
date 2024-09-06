@@ -96,7 +96,7 @@ class CustomEnv(gym.Env):
         self.__old_position_robot = [self.__position_robot[0], self.__position_robot[1]]
         
         if dist_new < dist_old:
-            return 1
+            return 17
         else:
             return 0
            
@@ -106,12 +106,18 @@ class CustomEnv(gym.Env):
                                    self.__d_angl_rad
                                    ).get_angle_dev()
 
+        # if self.__delta_angle == 0.0:
+        #     return 17
+        # elif abs(self.__delta_angle) < np.pi / 2 and abs(self.__delta_angle) < abs(self.__delta_angle_old):
+        #     return -10.83 * self.__delta_angle + 17
+        # else:
+        #     return -17
         if self.__delta_angle == 0.0:
             return 17
         elif abs(self.__delta_angle) < np.pi / 2 and abs(self.__delta_angle) < abs(self.__delta_angle_old):
-            return -10.83 * self.__delta_angle + 17
+            return -10.85 * self.__delta_angle + 9.28
         else:
-            return -17
+            return 0
               
     def __check_done(self):
         goal = False

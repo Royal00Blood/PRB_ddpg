@@ -9,7 +9,7 @@ TAU   = 0.001 # 0.001 to 0.01
 NOISE = 0.1 # Гаусов шум 
 
 LR_ACTOR  = 0.0001 # 0.0001 to 0.001
-LR_CRITIC = 0.001 # 0.001 to 0.01
+LR_CRITIC = 0.003 # 0.001 to 0.01
 
 # Параметры среды
 STATE_SIZE  = 7
@@ -26,7 +26,7 @@ TIME = 0.1
 
 # Параметры обучения
 EPISODES = 6000
-EP_STEPS = 2000
+EP_STEPS = 500
 
 #  Параметры проверки
 TEST_EPISODES = 100
