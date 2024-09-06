@@ -2,7 +2,11 @@ import torch
 import torch.nn as nn
 import torch._dynamo
 import torch.nn.functional as F
-from settings import ACTION_, STATE_SIZE, SEED
+from settings import (ACTION_SIZE, STATE_SIZE, 
+                      SEED, ACTION_,
+                      A_FC1, A_FC2, A_FC3,
+                      C_FC11, C_FC12, C_FC13,
+                      C_FC21, C_FC22, C_FC23)
 import numpy as np
 torch._dynamo.config.suppress_errors = True
 
@@ -12,61 +16,32 @@ def hidden_init(layer):
     return (-lim, lim)
     
 class Actor(nn.Module):
-    def __init__(self, state_size = STATE_SIZE, action_size=ACTION_, seed=SEED):
+    def __init__(self, state_size= STATE_SIZE, action_size=ACTION_SIZE, 
+                 seed= SEED, fc1_units=A_FC1, fc2_units=A_FC2, 
+                 fc3_units=A_FC3):
         super(Actor, self).__init__()
         self.seed = torch.manual_seed(seed)
-        self.fc1 = nn.Linear(state_size, 256)
-        self.fc2 = nn.Linear(256, 300)
-        
-        self.fc3v = nn.Linear(300, 350)
-        self.fc3w = nn.Linear(300, 350)
-        
-        self.fc4v = nn.Linear(350, 400)
-        self.fc4w = nn.Linear(350, 400)
-        
-        self.fc5v = nn.Linear(400, 512)
-        self.fc5w = nn.Linear(400, 512)
-        self.bn5 = nn.LayerNorm(512)
-        
-        self.fc6v = nn.Linear(512, 1)
-        self.fc6w = nn.Linear(512, 1)
+        self.fc1 = nn.Linear(state_size, fc1_units)
+        self.fc2 = nn.Linear(fc1_units, fc2_units)
+        self.fc3 = nn.Linear(fc2_units, fc3_units)
+        self.fc4 = nn.Linear(fc3_units, action_size)
         self.reset_parameters()
     
     def reset_parameters(self):
         self.fc1.weight.data.uniform_(*hidden_init(self.fc1))
         self.fc2.weight.data.uniform_(*hidden_init(self.fc2))
-        
-        self.fc3v.weight.data.uniform_(*hidden_init(self.fc3v))
-        self.fc4v.weight.data.uniform_(*hidden_init(self.fc4v))
-        self.fc5v.weight.data.uniform_(*hidden_init(self.fc5v))
-        self.fc6v.weight.data.uniform_(-3e-3, 3e-3)
-        
-        self.fc3w.weight.data.uniform_(*hidden_init(self.fc3w))
-        self.fc4w.weight.data.uniform_(*hidden_init(self.fc4w))
-        self.fc5w.weight.data.uniform_(*hidden_init(self.fc5w))
-        self.fc6w.weight.data.uniform_(-3e-3, 3e-3)
+        self.fc3.weight.data.uniform_(*hidden_init(self.fc3v))
+        self.fc4.weight.data.uniform_(-3e-3, 3e-3)
         
     def forward(self, state):
-    
         x = F.relu(self.fc1(state))
         x = F.relu(self.fc2(x))
-        
-        v = F.relu(self.fc3v(x))
-        v = F.relu(self.fc4v(v))
-        v = F.relu(self.fc5v(v))
-        v = self.bn5(v)
-        v = F.tanh(self.fc6v(v))
-        
-        w = F.relu(self.fc3w(x))
-        w = F.relu(self.fc4w(w))
-        w = F.relu(self.fc5w(w))
-        w = self.bn5(w)
-        w = F.tanh(self.fc6w(w))
-        
-        return torch.cat([v*ACTION_, w*ACTION_], dim=-1)
+        x = F.relu(self.fc3(x))
+        x = F.tanh(self.fc4(x))*ACTION_
+        return x
     
 class Critic1(nn.Module):
-    def __init__(self, state_size= STATE_SIZE, action_size=ACTION_, seed= SEED, fcs1_units=400, fc2_units=300):
+    def __init__(self, state_size= STATE_SIZE, action_size=ACTION_SIZE, seed= SEED, fcs1_units=C_FC11, fc2_units=C_FC12):
         """Initialize parameters and build model.
         Params
         ======
@@ -96,7 +71,8 @@ class Critic1(nn.Module):
         return self.fc3(x)
     
 class Critic2(nn.Module):
-    def __init__(self, state_size= STATE_SIZE, action_size=ACTION_, seed= SEED, fcs1_units=450, fc2_units=350):
+    def __init__(self, state_size= STATE_SIZE, 
+                 action_size=ACTION_SIZE, seed= SEED, fcs1_units=C_FC21, fc2_units=C_FC22):
         """Initialize parameters and build model.
         Params
         ======

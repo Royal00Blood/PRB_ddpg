@@ -34,7 +34,7 @@ class CustomEnv(gym.Env):
         
         while(1):
             self.__target_point = [random.uniform(-AREA_GENERATION,AREA_GENERATION), random.uniform(-AREA_GENERATION,AREA_GENERATION)] # Target point [x, y]
-            if (self.__target_point[0] != 0 or self.__target_point[1] != 0):
+            if (self.__target_point[0] >= 0.2 or self.__target_point[0] <= -0.2) or (self.__target_point[1] >= 0.2 or self.__target_point[1] <= -0.2):
                 break
             
         self.__old_target_point = self.__target_point
