@@ -2,7 +2,7 @@ import numpy as np
 from settings import (STATE_SIZE, ACTION_SIZE, 
                       ACTION_, STATE_, AREA_DEFEAT, 
                       AREA_WIN, AREA_GENERATION, 
-                      TIME, EP_STEPS )
+                      TIME, EP_STEPS,S_G_TARG )
 import gym
 import random
 from DistanceBW2points import DistanceBW2points
@@ -31,8 +31,8 @@ class CustomEnv(gym.Env):
         self.__position_robot = np.zeros(2) # The position of the robot [x, y]
         self.__move           = np.zeros(2) # [velocity, angular velocity]
         self.__robot_quat     = np.zeros(4) # Quaternions [Qx, Qy, Qz, Qw]
-        self.__target_point =[random.choice(random.uniform(0.3,AREA_GENERATION), random.uniform(-AREA_GENERATION,-0.3)),
-                              random.choice(random.uniform(0.3,AREA_GENERATION), random.uniform(-AREA_GENERATION,-0.3))]
+        self.__target_point =[random.choice([random.uniform(S_G_TARG, AREA_GENERATION), random.uniform(-AREA_GENERATION,-S_G_TARG)]),
+                              random.choice([random.uniform(S_G_TARG, AREA_GENERATION), random.uniform(-AREA_GENERATION,-S_G_TARG)])]
             
         self.__old_target_point = self.__target_point
         self.__old_position_robot = 0.0
