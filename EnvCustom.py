@@ -96,9 +96,9 @@ class CustomEnv(gym.Env):
         self.__old_position_robot = [self.__position_robot[0], self.__position_robot[1]]
         
         if dist_new < dist_old:
-            return 17
+            return 1
         else:
-            return -17
+            return -1
            
     def __angle_reward(self):
         self.__delta_angle = d_ang(self.__position_robot[0], self.__position_robot[1],
