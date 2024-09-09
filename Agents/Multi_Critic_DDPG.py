@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import numpy as np
-from Models.model import Actor, Critic1, Critic2
+from models.model import Actor, Critic1, Critic2
 import os
 from settings import (STATE_SIZE, ACTION_SIZE, LR_ACTOR,
                       LR_CRITIC,BATCH_SIZE,GAMMA,BUFFER_SIZE,
@@ -10,20 +10,21 @@ from settings import (STATE_SIZE, ACTION_SIZE, LR_ACTOR,
                       TEST_EPISODES, NOISE)
 from torch.utils.tensorboard import SummaryWriter
 from torchrl.data import PrioritizedReplayBuffer
-from PrioritizedReplayBuffer import PrioritizedReplayBuffer
+from Buffer.PrioritizedReplayBuffer import PrioritizedReplayBuffer
 import time
-
-# Определение агента
-save_dir = '/save_weights'
-os.makedirs(save_dir, exist_ok=True)
-save_dir_m = '/save_model'
-os.makedirs(save_dir_m, exist_ok=True)
 
 class PRB_DDPG_Agent:
     
-    def __init__(self, state_size=STATE_SIZE, action_size=ACTION_SIZE,
-                 lr_actor=LR_ACTOR, lr_critic=LR_CRITIC, gamma=GAMMA,
-                 tau=TAU, buffer_size=BUFFER_SIZE, batch_size=BATCH_SIZE, alpha=ALPHA):
+    def __init__(self, 
+                 state_size=STATE_SIZE, 
+                 action_size=ACTION_SIZE,
+                 lr_actor=LR_ACTOR, 
+                 lr_critic=LR_CRITIC, 
+                 gamma=GAMMA,
+                 tau=TAU, 
+                 buffer_size=BUFFER_SIZE, 
+                 batch_size=BATCH_SIZE, 
+                 alpha=ALPHA):
         
         self.state_size = state_size
         self.action_size = action_size
@@ -120,11 +121,11 @@ class PRB_DDPG_Agent:
             done = False
             episode_reward = 0
             env.set_number(episode)
-
+            i=0
             while not done:
                 action = self.actor(torch.tensor(state, dtype=torch.float32)).detach().numpy()
                 next_state, reward, done, _ = env.step(action)
-        
+                
                 self.replay_buffer.push(state, action, reward, next_state, done)
                 if len(self.replay_buffer) > self.batch_size:
                     self.update()
