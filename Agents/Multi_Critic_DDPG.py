@@ -2,7 +2,8 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import numpy as np
-from Models.actors import Actor, Critic1, Critic2
+from models.actors import Actor_1, Actor_2
+from models.critics import Critic1, Critic2
 import os
 from settings import (STATE_SIZE, ACTION_SIZE, LR_ACTOR,
                       LR_CRITIC,BATCH_SIZE,GAMMA,BUFFER_SIZE,
@@ -10,7 +11,7 @@ from settings import (STATE_SIZE, ACTION_SIZE, LR_ACTOR,
                       TEST_EPISODES, NOISE)
 from torch.utils.tensorboard import SummaryWriter
 from torchrl.data import PrioritizedReplayBuffer
-from Buffers.PrioritizedReplayBuffer import PrioritizedReplayBuffer
+from buffers.PrioritizedReplayBuffer import PrioritizedReplayBuffer
 import time
 
 class PRB_DDPG_Agent:
@@ -39,10 +40,10 @@ class PRB_DDPG_Agent:
         self.global_step = 0
         self.replay_buffer = PrioritizedReplayBuffer(buffer_size, alpha)
         
-        self.actor = torch.compile(Actor(state_size, action_size))
+        self.actor = torch.compile(Actor_1(state_size, action_size))
         self.critic1 = torch.compile(Critic1(state_size, action_size))
         self.critic2 = torch.compile(Critic2(state_size, action_size))  # Второй критик
-        self.actor_target = torch.compile(Actor(state_size, action_size))
+        self.actor_target = torch.compile(Actor_1(state_size, action_size))
         self.critic1_target = torch.compile(Critic1(state_size, action_size))
         self.critic2_target = torch.compile(Critic2(state_size, action_size))  # Целевая сеть второго критика
         
