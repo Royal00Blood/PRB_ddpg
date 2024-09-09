@@ -9,9 +9,7 @@ from settings import (STATE_SIZE, ACTION_SIZE, LR_ACTOR,
                       ALPHA,TAU,EPISODES,EP_STEPS,TEST_EP_STEPS,
                       TEST_EPISODES, NOISE)
 from torch.utils.tensorboard import SummaryWriter
-from torchrl.modules import DdpgMlpQNet, DdpgCnnActor, DdpgCnnQNet, DdpgMlpActor
-from torchrl.data import PrioritizedReplayBuffer, TensorDictPrioritizedReplayBuffer
-from pytorchrl.agent.actors.noise import gaussian as noise
+from torchrl.data import PrioritizedReplayBuffer
 from PrioritizedReplayBuffer import PrioritizedReplayBuffer
 import time
 
