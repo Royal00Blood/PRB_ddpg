@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import numpy as np
-from model import Actor, Critic1, Critic2
+from Models.model import Actor, Critic1, Critic2
 import os
 from settings import (STATE_SIZE, ACTION_SIZE, LR_ACTOR,
                       LR_CRITIC,BATCH_SIZE,GAMMA,BUFFER_SIZE,
@@ -10,9 +10,14 @@ from settings import (STATE_SIZE, ACTION_SIZE, LR_ACTOR,
                       TEST_EPISODES, NOISE)
 from torch.utils.tensorboard import SummaryWriter
 from torchrl.data import PrioritizedReplayBuffer
-from pytorchrl.agent.actors.noise import gaussian 
 from PrioritizedReplayBuffer import PrioritizedReplayBuffer
 import time
+
+# Определение агента
+save_dir = '/save_weights'
+os.makedirs(save_dir, exist_ok=True)
+save_dir_m = '/save_model'
+os.makedirs(save_dir_m, exist_ok=True)
 
 class PRB_DDPG_Agent:
     
