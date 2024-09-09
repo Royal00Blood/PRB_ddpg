@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import numpy as np
-from models.model import Actor, Critic1, Critic2
+from Models.actors import Actor, Critic1, Critic2
 import os
 from settings import (STATE_SIZE, ACTION_SIZE, LR_ACTOR,
                       LR_CRITIC,BATCH_SIZE,GAMMA,BUFFER_SIZE,
@@ -10,7 +10,7 @@ from settings import (STATE_SIZE, ACTION_SIZE, LR_ACTOR,
                       TEST_EPISODES, NOISE)
 from torch.utils.tensorboard import SummaryWriter
 from torchrl.data import PrioritizedReplayBuffer
-from Buffer.PrioritizedReplayBuffer import PrioritizedReplayBuffer
+from Buffers.PrioritizedReplayBuffer import PrioritizedReplayBuffer
 import time
 
 class PRB_DDPG_Agent:

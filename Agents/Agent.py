@@ -8,7 +8,7 @@ from torch.utils.tensorboard import SummaryWriter
 from torchrl.data import LazyMemmapStorage, TensorDictReplayBuffer
 from torchrl.data.replay_buffers.samplers import PrioritizedSampler
 
-from Models.model import Actor, Critic1, Critic2
+from Models.actors import Actor, Critic1, Critic2
 from settings import (STATE_SIZE, ACTION_SIZE, LR_ACTOR,
                       LR_CRITIC,BATCH_SIZE,GAMMA,BUFFER_SIZE,
                       ALPHA,TAU,EPISODES,EP_STEPS,TEST_EP_STEPS,

@@ -1,5 +1,4 @@
 import numpy as np
-import random
 from collections import namedtuple
 
 # Определение named tuple для хранения переходов
