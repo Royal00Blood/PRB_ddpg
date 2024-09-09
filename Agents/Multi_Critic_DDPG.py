@@ -52,6 +52,10 @@ class PRB_DDPG_Agent:
         self.critic1_optimizer = optim.Adam(self.critic1.parameters(), lr=self.lr_critic)
         self.critic2_optimizer = optim.Adam(self.critic2.parameters(), lr=self.lr_critic)  # Оптимизатор для второго критика
     
+    def get_action(self, state):
+        state = torch.from_numpy(state).float().unsqueeze(0)
+        return self.actor(state).squeeze(0).detach().numpy()
+    
     def update(self):
         transitions, indices, weights = self.replay_buffer.sample(self.batch_size)
         if transitions is None:
@@ -126,7 +130,8 @@ class PRB_DDPG_Agent:
             env.set_number(episode)
             i=0
             while not done:
-                action = self.actor(torch.tensor(state, dtype=torch.float32)).detach().numpy()
+                # action = self.actor(torch.tensor(state, dtype=torch.float32)).detach().numpy()
+                action = self.get_action(state)
                 next_state, reward, done, _ = env.step(action)
                 i+=1
                 if i>2000:
