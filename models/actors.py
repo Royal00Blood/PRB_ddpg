@@ -4,7 +4,7 @@ import torch._dynamo
 import torch.nn.functional as F
 from settings import (ACTION_, STATE_SIZE, SEED,
                       ACTION_SIZE,LAYER_A)
-torch._dynamo.config.suppress_errors = True
+# torch._dynamo.config.suppress_errors = True
     
 class Actor_1(nn.Module):
     def __init__(self, 
@@ -15,6 +15,7 @@ class Actor_1(nn.Module):
         super(Actor_1, self).__init__()
         
         self.seed = torch.manual_seed(seed)
+        self.dropout = nn.Dropout(0.5)
         
         self.layer_1 = nn.Linear(state_size, layers[0])
         nn.init.kaiming_normal_(self.layer_1.weight, mode='fan_in',nonlinearity='relu')
@@ -22,12 +23,12 @@ class Actor_1(nn.Module):
         
         self.layer_2 = nn.Linear(layers[0],layers[1])
         nn.init.orthogonal_(self.layer_2.weight, gain=nn.init.calculate_gain('relu'))
-        self.dropout_2 = nn.Dropout(0.5)
+        
         self.batch_norm_2 = nn.BatchNorm1d(layers[1])
         
         self.layer_3 = nn.Linear(layers[1],layers[2])
         nn.init.orthogonal_(self.layer_3.weight, gain=nn.init.calculate_gain('relu'))
-        self.dropout = nn.Dropout(0.5)
+        
         self.batch_norm_3 = nn.BatchNorm1d(layers[2])
         
         self.layer_4 = nn.Linear(layers[2],layers[3])
@@ -41,11 +42,12 @@ class Actor_1(nn.Module):
     def forward(self, state):
         x = self.layer_1(state)
         #x = self.batch_norm_1(x)
+        x = self.dropout(x)
         x = F.relu(x)
         
         x = self.layer_2(x)
         #x = self.batch_norm_2(x)
-        x = self.dropout_2(x)
+        x = self.dropout(x)
         x = F.relu(x)
         
         x = self.layer_3(x)
@@ -55,6 +57,7 @@ class Actor_1(nn.Module):
         
         x = self.layer_4(x)
         #x = self.batch_norm_4(x)
+        x = self.dropout(x)
         x = F.relu(x)
         
         action = self.layer_5(x)

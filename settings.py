@@ -21,7 +21,7 @@ STATE_  = 10.0
 
 #диапазон ограничений поля
 AREA_WIN    = 0.1
-AREA_DEFEAT = 1.5
+AREA_DEFEAT = 10
 S_G_TARG = AREA_WIN*3
 
 AREA_GENERATION = AREA_DEFEAT-0.2

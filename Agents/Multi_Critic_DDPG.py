@@ -13,6 +13,7 @@ from torch.utils.tensorboard import SummaryWriter
 from torchrl.data import PrioritizedReplayBuffer
 from buffers.PrioritizedReplayBuffer import PrioritizedReplayBuffer
 import time
+device = "cuda"
 
 class PRB_DDPG_Agent:
     
@@ -40,12 +41,12 @@ class PRB_DDPG_Agent:
         self.global_step = 0
         self.replay_buffer = PrioritizedReplayBuffer(buffer_size, alpha)
         
-        self.actor = torch.compile(Actor_1(state_size, action_size))
-        self.critic1 = torch.compile(Critic1(state_size, action_size))
-        self.critic2 = torch.compile(Critic2(state_size, action_size))  # Второй критик
-        self.actor_target = torch.compile(Actor_1(state_size, action_size))
-        self.critic1_target = torch.compile(Critic1(state_size, action_size))
-        self.critic2_target = torch.compile(Critic2(state_size, action_size))  # Целевая сеть второго критика
+        self.actor = torch.compile(Actor_1(state_size, action_size)).to(device)
+        self.critic1 = torch.compile(Critic1(state_size, action_size)).to(device)
+        self.critic2 = torch.compile(Critic2(state_size, action_size)).to(device)  # Второй критик
+        self.actor_target = torch.compile(Actor_1(state_size, action_size)).to(device)
+        self.critic1_target = torch.compile(Critic1(state_size, action_size)).to(device)
+        self.critic2_target = torch.compile(Critic2(state_size, action_size)).to(device)  # Целевая сеть второго критика
         
         self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=self.lr_actor)
         self.critic1_optimizer = optim.Adam(self.critic1.parameters(), lr=self.lr_critic)
@@ -117,6 +118,7 @@ class PRB_DDPG_Agent:
         start_time = time.time()
         episode_rewards = []
         
+        
         for episode in range(num_episodes):
             state = env.reset_env()
             done = False
@@ -126,7 +128,10 @@ class PRB_DDPG_Agent:
             while not done:
                 action = self.actor(torch.tensor(state, dtype=torch.float32)).detach().numpy()
                 next_state, reward, done, _ = env.step(action)
-                
+                i+=1
+                if i>2000:
+                    reward -= 500
+                    break
                 self.replay_buffer.push(state, action, reward, next_state, done)
                 if len(self.replay_buffer) > self.batch_size:
                     self.update()
