@@ -149,13 +149,14 @@ class Agent:
             
             print(f"Episode {episode+1}/{EPISODES}, Reward: {episode_reward:.2f}, Avg Reward: {avg_reward:.2f}")
             if episode % 10 == 0:
-                torch.save(self.actor.state_dict(), os.path.join(save_dir, 'actor_weights.pth'))
-                torch.save(self.critic1.state_dict(), os.path.join(save_dir, 'critic1_weights.pth'))
-                torch.save(self.critic2.state_dict(), os.path.join(save_dir, 'critic2_weights.pth'))
+                torch.save(self.actor.state_dict()  , 'actor_weights.pth')
+                torch.save(self.critic1.state_dict(), 'critic1_weights.pth')
+                torch.save(self.critic2.state_dict(),'critic2_weights.pth')
             
-        torch.save(self.actor.state_dict(), os.path.join(save_dir, 'actor_weights.pth'))
-        torch.save(self.critic1.state_dict(), os.path.join(save_dir, 'critic1_weights.pth'))
-        torch.save(self.critic2.state_dict(), os.path.join(save_dir, 'critic2_weights.pth'))
+        # Сохранение весов и моделей
+        torch.save(self.actor.state_dict()  ,'actor_weights.pth')
+        torch.save(self.critic1.state_dict(),  'critic1_weights.pth')
+        torch.save(self.critic2.state_dict(),  'critic2_weights.pth')
         
         self.writer.close()
         end_time = time.time()
