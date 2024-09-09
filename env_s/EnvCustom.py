@@ -2,11 +2,11 @@ import numpy as np
 from settings import (STATE_SIZE, ACTION_SIZE, 
                       ACTION_, STATE_, AREA_DEFEAT, 
                       AREA_WIN, AREA_GENERATION, 
-                      TIME, EP_STEPS,S_G_TARG )
+                      TIME, EP_STEPS,S_G_TARG, REWARD)
 import gym
 import random
-from DistanceBW2points import DistanceBW2points
-from deviation_angle import DeviationAngle as d_ang
+from calculation_scripts.DistanceBW2points import DistanceBW2points as d_dist
+from calculation_scripts.deviation_angle import DeviationAngle as d_ang
 import matplotlib.pyplot as plt
 
 class CustomEnv(gym.Env):
@@ -72,9 +72,9 @@ class CustomEnv(gym.Env):
     def __new_reward(self, goal):
         if self.done:
             if goal:
-                return EP_STEPS
+                return REWARD
             else:
-                return -EP_STEPS
+                return -REWARD
         else:
             self.__old_target_point = [self.__target_point[0], self.__target_point[1]]
             
@@ -87,8 +87,8 @@ class CustomEnv(gym.Env):
             return reward
                        
     def __dist_reward(self):
-        dist_new = DistanceBW2points(self.__target_point[0], self.__target_point[1], self.__position_robot[0], self.__position_robot[1]).getDistance()
-        dist_old = DistanceBW2points(self.__old_target_point[0], self.__old_target_point[1], self.__old_position_robot[0], self.__old_position_robot[1]).getDistance()
+        dist_new = d_dist(self.__target_point[0], self.__target_point[1], self.__position_robot[0], self.__position_robot[1]).getDistance()
+        dist_old = d_dist(self.__old_target_point[0], self.__old_target_point[1], self.__old_position_robot[0], self.__old_position_robot[1]).getDistance()
         self.__old_target_point = [self.__target_point[0], self.__target_point[1]]
         self.__old_position_robot = [self.__position_robot[0], self.__position_robot[1]]
         

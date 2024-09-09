@@ -2,11 +2,9 @@ import torch
 import torch.nn as nn
 import torch._dynamo
 import torch.nn.functional as F
-from settings import (ACTION_SIZE, STATE_SIZE, 
-                      SEED, ACTION_,
-                      A_FC1, A_FC2, A_FC3,
-                      C_FC11, C_FC12, C_FC13,
-                      C_FC21, C_FC22, C_FC23)
+from settings import (ACTION_, STATE_SIZE, SEED,
+                      ACTION_SIZE,LAYER_A,LAYER_C1
+                      ,LAYER_C2)
 import numpy as np
 torch._dynamo.config.suppress_errors = True
 
@@ -16,13 +14,16 @@ def hidden_init(layer):
     return (-lim, lim)
     
 class Actor(nn.Module):
-    def __init__(self, state_size= STATE_SIZE, action_size=ACTION_SIZE, 
-                 seed= SEED, fc1_units=A_FC1, fc2_units=A_FC2):
+    def __init__(self, 
+                 state_size = STATE_SIZE, 
+                 action_size=ACTION_SIZE, 
+                 seed=SEED,
+                 layers=LAYER_A ):
         super(Actor, self).__init__()
         self.seed = torch.manual_seed(seed)
-        self.fc1 = nn.Linear(state_size, fc1_units)
-        self.fc2 = nn.Linear(fc1_units, fc2_units)
-        self.fc3 = nn.Linear(fc2_units, action_size)
+        self.fc1 = nn.Linear(state_size, layers[0])
+        self.fc2 = nn.Linear(layers[0], layers[1])
+        self.fc3 = nn.Linear(layers[1], action_size)
         self.reset_parameters()
     
     def reset_parameters(self):
