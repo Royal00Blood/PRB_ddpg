@@ -16,10 +16,6 @@ from settings import (STATE_SIZE, ACTION_SIZE, LR_ACTOR,
 import torch
 from tensordict import TensorDict
 
-save_dir = '/save_weights'
-os.makedirs(save_dir, exist_ok=True)
-save_dir_m = '/save_model'
-os.makedirs(save_dir_m, exist_ok=True)
 
 class Agent:
     def __init__(self, state_size=STATE_SIZE, action_size=ACTION_SIZE, lr_actor=LR_ACTOR,
