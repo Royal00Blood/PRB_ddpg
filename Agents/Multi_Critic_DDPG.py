@@ -41,12 +41,12 @@ class PRB_DDPG_Agent:
         self.global_step = 0
         self.replay_buffer = PrioritizedReplayBuffer(buffer_size, alpha)
         
-        self.actor = torch.compile(Actor_1(state_size, action_size)).to(device)
-        self.critic1 = torch.compile(Critic1(state_size, action_size)).to(device)
-        self.critic2 = torch.compile(Critic2(state_size, action_size)).to(device)  # Второй критик
-        self.actor_target = torch.compile(Actor_1(state_size, action_size)).to(device)
-        self.critic1_target = torch.compile(Critic1(state_size, action_size)).to(device)
-        self.critic2_target = torch.compile(Critic2(state_size, action_size)).to(device)  # Целевая сеть второго критика
+        self.actor = torch.compile(Actor_1(state_size, action_size))
+        self.critic1 = torch.compile(Critic1(state_size, action_size))
+        self.critic2 = torch.compile(Critic2(state_size, action_size)) # Второй критик
+        self.actor_target = torch.compile(Actor_1(state_size, action_size))
+        self.critic1_target = torch.compile(Critic1(state_size, action_size))
+        self.critic2_target = torch.compile(Critic2(state_size, action_size))  # Целевая сеть второго критика .to device
         
         self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=self.lr_actor)
         self.critic1_optimizer = optim.Adam(self.critic1.parameters(), lr=self.lr_critic)
@@ -130,8 +130,8 @@ class PRB_DDPG_Agent:
             env.set_number(episode)
             i=0
             while not done:
-                # action = self.actor(torch.tensor(state, dtype=torch.float32)).detach().numpy()
-                action = self.get_action(state)
+                action = self.actor(torch.tensor(state, dtype=torch.float32)).detach().numpy() #torch.from_numpy(state).float().unsqueeze(0)
+                # action = self.get_action(state)
                 next_state, reward, done, _ = env.step(action)
                 i+=1
                 if i>2000:
