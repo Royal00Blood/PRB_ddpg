@@ -13,67 +13,63 @@ def hidden_init(layer):
     lim = 1. / np.sqrt(fan_in)
     return (-lim, lim)
     
+
 class Critic1(nn.Module):
-    def __init__(self, state_size= STATE_SIZE,
+    def __init__(self, state_size=STATE_SIZE,
                  action_size=ACTION_SIZE,
-                 seed= SEED,
-                 layers =LAYER_C1):
-        """Initialize parameters and build model.
-        Params
-        ======
-            state_size (int): Dimension of each state
-            action_size (int): Dimension of each action
-            seed (int): Random seed
-            fcs1_units (int): Number of nodes in the first hidden layer
-            fc2_units (int): Number of nodes in the second hidden layer
-        """
+                 seed=SEED,
+                 layers=LAYER_C1):
         super(Critic1, self).__init__()
         self.seed = torch.manual_seed(seed)
-        self.fs1 = nn.Linear(state_size, layers[0])
-        self.fa1 = nn.Linear(action_size, layers[0])
-        self.fc2 = nn.Linear(layers[0]*2, layers[1])
-        self.fc3 = nn.Linear(layers[1], 1)
+        
+        self.layer1 = nn.Linear(state_size + action_size, layers[0])
+        self.batch_norm1 = nn.BatchNorm1d(layers[0])
+        
+        self.layer2 = nn.Linear(layers[0], layers[1])
+        self.batch_norm2 = nn.BatchNorm1d(layers[1])
+        
+        self.layer3 = nn.Linear(layers[1], 1)
+        
         self.reset_parameters()
-
+        
     def reset_parameters(self):
-        self.fcs1.weight.data.normal_(0,0.1)
-        self.fc2.weight.data.normal_(0,0.1)
-        self.fc3.weight.data.normal_(0,0.1)
-
+        self.layer1.weight.data.uniform_(-3e-3, 3e-3)
+        self.layer2.weight.data.uniform_(-3e-3, 3e-3)
+        self.layer3.weight.data.uniform_(-3e-3, 3e-3)
+        
     def forward(self, state, action):
-        """Build a critic (value) network that maps (state, action) pairs -> Q-values."""
-        xs = F.relu(self.fcs1(state))
-        x = torch.cat((xs, action), dim=1)
-        x = F.relu(self.fc2(x))
-        return self.fc3(x)
+        x = torch.cat((state, action), dim=1)
+        x = F.relu(self.batch_norm1(self.layer1(x)))
+        x = F.relu(self.batch_norm2(self.layer2(x)))
+        return self.layer3(x)
     
+
 class Critic2(nn.Module):
-    def __init__(self, state_size= STATE_SIZE, 
-                 action_size=ACTION_SIZE, seed= SEED, layers=LAYER_C2):
-        """Initialize parameters and build model.
-        Params
-        ======
-            state_size (int): Dimension of each state
-            action_size (int): Dimension of each action
-            seed (int): Random seed
-            fcs1_units (int): Number of nodes in the first hidden layer
-            fc2_units (int): Number of nodes in the second hidden layer
-        """
+    def __init__(self, state_size=STATE_SIZE,
+                 action_size=ACTION_SIZE,
+                 seed=SEED,
+                 layers=LAYER_C2):
         super(Critic2, self).__init__()
         self.seed = torch.manual_seed(seed)
-        self.fcs1 = nn.Linear(state_size, layers[0])
-        self.fc2 = nn.Linear(layers[0]+action_size, layers[1])
-        self.fc3 = nn.Linear(layers[1], 1)
+        
+        self.layer1 = nn.Linear(state_size + action_size, layers[0])
+        self.batch_norm1 = nn.BatchNorm1d(layers[0])
+        
+        self.layer2 = nn.Linear(layers[0], layers[1])
+        self.batch_norm2 = nn.BatchNorm1d(layers[1])
+        
+        self.layer3 = nn.Linear(layers[1], 1)
+        
         self.reset_parameters()
-
+        
     def reset_parameters(self):
-        self.fcs1.weight.data.uniform_(*hidden_init(self.fcs1))
-        self.fc2.weight.data.uniform_(*hidden_init(self.fc2))
-        self.fc3.weight.data.uniform_(-3e-3, 3e-3)
-
+        torch.nn.init.kaiming_normal_(self.layer1.weight, mode='fan_in', nonlinearity='relu')
+        torch.nn.init.kaiming_normal_(self.layer2.weight, mode='fan_in', nonlinearity='relu')
+        torch.nn.init.kaiming_normal_(self.layer3.weight, mode='fan_in', nonlinearity='relu')
+        
+        
     def forward(self, state, action):
-        """Build a critic (value) network that maps (state, action) pairs -> Q-values."""
-        xs = F.relu(self.fcs1(state))
-        x = torch.cat((xs, action), dim=1)
-        x = F.relu(self.fc2(x))
-        return self.fc3(x)
+        x = torch.cat((state, action), dim=1)
+        x = F.relu(self.batch_norm1(self.layer1(x)))
+        x = F.relu(self.batch_norm2(self.layer2(x)))
+        return self.layer3(x)
