@@ -29,7 +29,7 @@ class CustomEnv(gym.Env):
 
     def __reset_robot(self):
         self.__position_robot = np.zeros(2) # The position of the robot [x, y]
-        self.__move           = np.zeros(2) # [velocity, angular velocity]
+        self.__move           = np.zeros(1) # [velocity, angular velocity]
         self.__robot_quat     = np.zeros(4) # Quaternions [Qx, Qy, Qz, Qw]
         self.__target_point =[random.choice([random.uniform(S_G_TARG, AREA_GENERATION), random.uniform(-AREA_GENERATION,-S_G_TARG)]),
                               random.choice([random.uniform(S_G_TARG, AREA_GENERATION), random.uniform(-AREA_GENERATION,-S_G_TARG)])]
@@ -43,7 +43,7 @@ class CustomEnv(gym.Env):
         
     def step(self, action):
         # Применяем действие к состоянию и получаем новое состояние
-        self.__move = action #[v, w]
+        self.__move = [0.1, action] #[v, w]
         self.state = self.__calculate_state()
         # Проверяем, завершен ли эпизод
         goal = self.__check_done()

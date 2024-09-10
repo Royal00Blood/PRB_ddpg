@@ -54,6 +54,7 @@ class PRB_DDPG_Agent:
     
     def get_action(self, state):
         state = torch.from_numpy(state).float().unsqueeze(0)
+        print(f"state{state.shape}")
         return self.actor(state).squeeze(0).detach().numpy()
     
     def update(self):
@@ -64,7 +65,7 @@ class PRB_DDPG_Agent:
         states, actions, rewards, next_states, dones = zip(*transitions)
     
         states = torch.tensor(states + np.random.normal(0, NOISE, size=self.state_size), dtype=torch.float32)
-        actions = torch.tensor(actions + np.random.normal(0, NOISE, size=self.action_size), dtype=torch.float32)
+        actions = torch.tensor(actions + np.random.normal(0, NOISE, size=self.action_size), dtype=torch.float32).unsqueeze(1)
         next_states = torch.tensor(next_states + np.random.normal(0, NOISE, size=self.state_size), dtype=torch.float32)
         rewards = torch.tensor(rewards, dtype=torch.float32)
         dones = torch.tensor(dones, dtype=torch.float32)
@@ -77,8 +78,11 @@ class PRB_DDPG_Agent:
         
         target_q_values = rewards + self.gamma * (1 - dones) * torch.min(next_q_values1, next_q_values2)  # Усреднение ошибок
         
-        critic1_loss = (weights * nn.MSELoss(reduction='none')(self.critic1(states, actions), target_q_values.detach())).mean()
-        critic2_loss = (weights * nn.MSELoss(reduction='none')(self.critic2(states, actions), target_q_values.detach())).mean()
+        critic1_loss = (weights * nn.MSELoss(reduction='none')(self.critic1(states, actions), target_q_values.detach().unsqueeze(-1))).mean()
+        critic2_loss = (weights * nn.MSELoss(reduction='none')(self.critic2(states, actions), target_q_values.detach().unsqueeze(-1))).mean()
+        
+        # critic1_loss = (weights * nn.MSELoss(reduction='none')(self.critic1(states, actions), target_q_values.detach())).mean()
+        # critic2_loss = (weights * nn.MSELoss(reduction='none')(self.critic2(states, actions), target_q_values.detach())).mean()
         
         self.critic1_optimizer.zero_grad()
         critic1_loss.backward()
@@ -125,16 +129,17 @@ class PRB_DDPG_Agent:
         
         for episode in range(num_episodes):
             state = env.reset_env()
+            
             done = False
             episode_reward = 0
             env.set_number(episode)
             i=0
             while not done:
-                action = self.actor(torch.tensor(state, dtype=torch.float32)).detach().numpy() #torch.from_numpy(state).float().unsqueeze(0)
-                # action = self.get_action(state)
+                state_tensor = torch.tensor(state, dtype=torch.float32).unsqueeze(0)
+                action = self.actor(state_tensor).squeeze().detach().numpy()
                 next_state, reward, done, _ = env.step(action)
                 i+=1
-                if i>2000:
+                if i>1000:
                     reward -= 500
                     break
                 self.replay_buffer.push(state, action, reward, next_state, done)

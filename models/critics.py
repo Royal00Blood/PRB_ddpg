@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-import torch._dynamo
+# import torch._dynamo
 import torch.nn.functional as F
 from settings import (STATE_SIZE, SEED,
                       ACTION_SIZE, LAYER_C1,
@@ -22,7 +22,12 @@ class Critic1(nn.Module):
         super(Critic1, self).__init__()
         self.seed = torch.manual_seed(seed)
         
-        self.layer1 = nn.Linear(state_size + action_size, layers[0])
+        self.layer_s = nn.Linear(STATE_SIZE, layers[0])
+        self.layer_a = nn.Linear(ACTION_SIZE, layers[0])
+        
+        print(f"self.layer_s {self.layer_s}, self.layer_a {self.layer_a}")
+        self.layer_as = nn.Linear(layers[0] * 2, layers[0])
+        print(f"self.layer_s {self.layer_s}, self.layer_a {self.layer_a} , self.layer_as {self.layer_as}")
         self.batch_norm1 = nn.BatchNorm1d(layers[0])
         
         self.layer2 = nn.Linear(layers[0], layers[1])
@@ -33,15 +38,19 @@ class Critic1(nn.Module):
         self.reset_parameters()
         
     def reset_parameters(self):
-        self.layer1.weight.data.uniform_(-3e-3, 3e-3)
+        self.layer_s.weight.data.uniform_(-3e-3, 3e-3)
+        self.layer_a.weight.data.uniform_(-3e-3, 3e-3)
+        self.layer_as.weight.data.uniform_(-3e-3, 3e-3)
         self.layer2.weight.data.uniform_(-3e-3, 3e-3)
         self.layer3.weight.data.uniform_(-3e-3, 3e-3)
         
     def forward(self, state, action):
-        x = torch.cat((state, action), dim=1)
-        x = F.relu(self.batch_norm1(self.layer1(x)))
+        state_features = F.relu(self.layer_s(state))
+        action_features = F.relu(self.layer_a(action))
+        x = F.relu(self.layer_as(torch.cat((state_features, action_features), 1)))
         x = F.relu(self.batch_norm2(self.layer2(x)))
         return self.layer3(x)
+
     
 
 class Critic2(nn.Module):

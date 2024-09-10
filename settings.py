@@ -9,19 +9,19 @@ TAU   = 0.005  # 0.001 to 0.01
 NOISE = 0.1    # Гаусов шум 
 
 LR_ACTOR  = 0.0006 # 0.0001 to 0.001
-LR_CRITIC = 0.003 # 0.001 to 0.01
+LR_CRITIC = 0.005 # 0.001 to 0.01
 
 REWARD = 500
 # Параметры среды
 STATE_SIZE  = 7
-ACTION_SIZE = 2
+ACTION_SIZE = 1
 
 ACTION_ = 0.5
 STATE_  = 10.0
 
 #диапазон ограничений поля
 AREA_WIN    = 0.1
-AREA_DEFEAT = 10
+AREA_DEFEAT = 7
 S_G_TARG = AREA_WIN*3
 
 AREA_GENERATION = AREA_DEFEAT-0.2
@@ -40,7 +40,7 @@ SEED = 200
 
 # Кол нейронов в слоях
          #[ly1, ly2, ly3(v/w), ly4(v/w), ly5(v/w)] 
-LAYER_A = [200, 250, 300, 400, 512]
+LAYER_A = [100, 150, 200, 300, 312]
 LAYER_A2 = [200, 250, 250, 250, 400]
-LAYER_C1 = [200, 400]
-LAYER_C2 = [250, 500]
+LAYER_C1 = [200, 350]
+LAYER_C2 = [250, 400]
