@@ -26,8 +26,8 @@ from calculation_scripts.deviation_angle import DeviationAngle as d_ang
 from calculation_scripts.DistanceBW2points import DistanceBW2points as d_dist
 
 CORD_RANGE = 1000.00
-
-                                                      
+ANGL_RANGE = 3.14
+                                                   
 
 class Robot(EnvBase):
     # metadata = {
@@ -192,14 +192,15 @@ class Robot(EnvBase):
     def _make_spec(self, td_params):
     # Under the hood, this will populate self.output_spec["observation"]
         self.observation_spec = Composite(
-            xr=Bounded(low=-CORD_RANGE,high=CORD_RANGE,shape=(),dtype=torch.float32),
-            yr=Bounded(low=-CORD_RANGE,high=CORD_RANGE,shape=(),dtype=torch.float32),
-            xt=Bounded(low=-CORD_RANGE,high=CORD_RANGE,shape=(),dtype=torch.float32),
-            yt=Bounded(low=-CORD_RANGE,high=CORD_RANGE,shape=(),dtype=torch.float32),
+            xr=Bounded(low=-CORD_RANGE,high=CORD_RANGE,shape=(1,),dtype=torch.float32),
+            yr=Bounded(low=-CORD_RANGE,high=CORD_RANGE,shape=(1,),dtype=torch.float32),
+            xt=Bounded(low=-CORD_RANGE,high=CORD_RANGE,shape=(1,),dtype=torch.float32),
+            yt=Bounded(low=-CORD_RANGE,high=CORD_RANGE,shape=(1,),dtype=torch.float32),
+            angl = Bounded(low=-ANGL_RANGE,high=ANGL_RANGE,shape=(1,),dtype=torch.float32),
+            
             v_action = Bounded(low=-td_params["params", "max_action"],high=td_params["params", "max_action"],shape=(),dtype=torch.float32), # линейая скорость робота
             w_action = Bounded(low=-td_params["params", "max_action"],high=td_params["params", "max_action"],shape=(),dtype=torch.float32), # угловая скорость робота
-            angl = Bounded(low=-np.float32,high=np.float32,shape=(),dtype=torch.float32),
-            
+           
             params=self.make_composite_from_td(td_params["params"]),
             shape=(),
         )
