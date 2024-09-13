@@ -25,7 +25,7 @@ from settings import AREA_GENERATION, REWARD, AREA_DEFEAT, AREA_WIN
 from calculation_scripts.deviation_angle import DeviationAngle as d_ang
 from calculation_scripts.DistanceBW2points import DistanceBW2points as d_dist
 
-
+CORD_RANGE = 1000.00
 
                                                       
 
@@ -192,15 +192,15 @@ class Robot(EnvBase):
     def _make_spec(self, td_params):
     # Under the hood, this will populate self.output_spec["observation"]
         self.observation_spec = Composite(
-            xr=Bounded(low=-np.float32,high=np.float32,shape=(),dtype=torch.float32),
-            yr=Bounded(low=-np.float32,high=np.float32,shape=(),dtype=torch.float32),
-            xt=Bounded(low=-np.float32,high=np.float32,shape=(),dtype=torch.float32),
-            yt=Bounded(low=-np.float32,high=np.float32,shape=(),dtype=torch.float32),
+            xr=Bounded(low=-CORD_RANGE,high=CORD_RANGE,shape=(),dtype=torch.float32),
+            yr=Bounded(low=-CORD_RANGE,high=CORD_RANGE,shape=(),dtype=torch.float32),
+            xt=Bounded(low=-CORD_RANGE,high=CORD_RANGE,shape=(),dtype=torch.float32),
+            yt=Bounded(low=-CORD_RANGE,high=CORD_RANGE,shape=(),dtype=torch.float32),
             v_action = Bounded(low=-td_params["params", "max_action"],high=td_params["params", "max_action"],shape=(),dtype=torch.float32), # линейая скорость робота
             w_action = Bounded(low=-td_params["params", "max_action"],high=td_params["params", "max_action"],shape=(),dtype=torch.float32), # угловая скорость робота
             angl = Bounded(low=-np.float32,high=np.float32,shape=(),dtype=torch.float32),
             
-            params=make_composite_from_td(td_params["params"]),
+            params=self.make_composite_from_td(td_params["params"]),
             shape=(),
         )
         
@@ -209,13 +209,13 @@ class Robot(EnvBase):
         self.action_spec = Bounded(low=-td_params["params", "max_action"],high=td_params["params", "max_action"],shape=(2,),dtype=torch.float32)
         
         self.reward_spec = Unbounded(shape=(*td_params.shape, 1))
-
-    def make_composite_from_td(td):
+    
+    def make_composite_from_td(self,td):
         # custom function to convert a ``tensordict`` in a similar spec structure
         # of unbounded values.
         composite = Composite(
             {
-                key: make_composite_from_td(tensor)
+                key: self.make_composite_from_td(tensor)
                 if isinstance(tensor, TensorDictBase)
                 else Unbounded(dtype=tensor.dtype, device=tensor.device, shape=tensor.shape)
                 for key, tensor in td.items()
