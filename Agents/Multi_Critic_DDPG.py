@@ -52,11 +52,6 @@ class PRB_DDPG_Agent:
         self.critic1_optimizer = optim.Adam(self.critic1.parameters(), lr=self.lr_critic)
         self.critic2_optimizer = optim.Adam(self.critic2.parameters(), lr=self.lr_critic)  # Оптимизатор для второго критика
     
-    def get_action(self, state):
-        state = torch.from_numpy(state).float().unsqueeze(0)
-        print(f"state{state.shape}")
-        return self.actor(state).squeeze(0).detach().numpy()
-    
     def update(self):
         transitions, indices, weights = self.replay_buffer.sample(self.batch_size)
         if transitions is None:
@@ -65,8 +60,11 @@ class PRB_DDPG_Agent:
         states, actions, rewards, next_states, dones = zip(*transitions)
     
         states = torch.tensor(states + np.random.normal(0, NOISE, size=self.state_size), dtype=torch.float32)
+        print(f"states{states} , type{type(states)}")
         actions = torch.tensor(actions + np.random.normal(0, NOISE, size=self.action_size), dtype=torch.float32).unsqueeze(1)
+        print(f"action{actions} , type{type(actions)}")
         next_states = torch.tensor(next_states + np.random.normal(0, NOISE, size=self.state_size), dtype=torch.float32)
+        print(f"next_states{next_states} , type{type(next_states)}")
         rewards = torch.tensor(rewards, dtype=torch.float32)
         dones = torch.tensor(dones, dtype=torch.float32)
         weights = torch.tensor(weights, dtype=torch.float32)
@@ -135,7 +133,9 @@ class PRB_DDPG_Agent:
             env.set_number(episode)
             i=0
             while not done:
-                state_tensor = torch.tensor(state, dtype=torch.float32).unsqueeze(0)
+                print (state)
+                state_tensor = torch.tensor(state, dtype=torch.float32)#
+                print(state_tensor)
                 action = self.actor(state_tensor).squeeze().detach().numpy()
                 next_state, reward, done, _ = env.step(action)
                 i+=1
@@ -181,11 +181,7 @@ class PRB_DDPG_Agent:
         self.actor.load_state_dict(torch.load( 'actor_weights.pth'))
         self.critic1.load_state_dict(torch.load('critic1_weights.pth'))
         self.critic2.load_state_dict(torch.load( 'critic2_weights.pth'))
-        
-        # self.actor = torch.load(os.path.join(save_dir_m, 'actor_model.pth'))
-        # self.critic1 = torch.load(os.path.join(save_dir_m, 'critic1_model.pth'))
-        # self.critic2 = torch.load(os.path.join(save_dir_m, 'critic2_model.pth'))
-        
+       
         rewards = []
        
         for episode in range(max_episodes):
@@ -193,6 +189,7 @@ class PRB_DDPG_Agent:
             total_reward = 0
             for step in range(max_steps):
                 # Выбираем действие на основе текущего состояния
+                
                 state_tensor = torch.tensor(state, dtype=torch.float32).unsqueeze(0)
                 action = self.actor(state_tensor).squeeze().detach().numpy()
                 

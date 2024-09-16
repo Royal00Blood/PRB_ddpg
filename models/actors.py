@@ -1,10 +1,10 @@
 import torch
 import torch.nn as nn
-# import torch._dynamo
+import torch._dynamo
 import torch.nn.functional as F
 from settings import (ACTION_, STATE_SIZE, SEED,
                       ACTION_SIZE,LAYER_A)
-# torch._dynamo.config.suppress_errors = True
+torch._dynamo.config.suppress_errors = False
     
 class Actor_1(nn.Module):
     def __init__(self, 

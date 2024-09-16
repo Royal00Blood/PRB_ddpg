@@ -229,7 +229,7 @@ class Robot(EnvBase):
         rng = torch.manual_seed(seed)
         self.rng = rng
 
-    def gen_params(self ,batch_size=None) -> TensorDictBase:
+    def gen_params(batch_size=None) -> TensorDictBase:
         if batch_size is None:
             batch_size = []
         td = TensorDict(
@@ -258,3 +258,5 @@ check_env_specs(env)
 print("observation_spec:", env.observation_spec)
 print("state_spec:", env.state_spec)
 print("reward_spec:", env.reward_spec)
+td = env.reset()
+print("reset tensordict", td)

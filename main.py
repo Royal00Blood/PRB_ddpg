@@ -1,7 +1,6 @@
 #from EnvESP32 import CustomEnv as env_real
 from env_s.EnvCustom import CustomEnv as env_learn
 from agents.Multi_Critic_DDPG import PRB_DDPG_Agent as Agent
-from agents.DDPG import DDPG as Agent
 from settings import  EPISODES, TEST_EP_STEPS, TEST_EPISODES
 
 

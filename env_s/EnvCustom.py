@@ -43,19 +43,20 @@ class CustomEnv(gym.Env):
         
     def step(self, action):
         # Применяем действие к состоянию и получаем новое состояние
-        self.__move = [0.1, action] #[v, w]
-        self.state = self.__calculate_state()
+        # action [v, w]
+        self.state = self.__calculate_state(action)
         # Проверяем, завершен ли эпизод
         goal = self.__check_done()
         # Вычисляем награду
         self.__reward = self.__new_reward(goal)
         return self.state, self.__reward, self.done, {}
     
-    def __calculate_state(self):
-        self.__d_angl_rad += (self.__move[1] * TIME)  # изменение угла в радианах
+    def __calculate_state(self,action):
+        # action [v, w]
+        self.__d_angl_rad += (action[1] * TIME)  # изменение угла в радианах
         # The position of the robot [x, y]
-        self.__position_robot[0] += self.__move[0] * np.cos(self.__d_angl_rad) * TIME
-        self.__position_robot[1] += self.__move[0] * np.sin(self.__d_angl_rad) * TIME
+        self.__position_robot[0] += action[0] * np.cos(self.__d_angl_rad) * TIME
+        self.__position_robot[1] += action[0] * np.sin(self.__d_angl_rad) * TIME
         # Quaternions [Qx, Qy, Qz, Qw]
         self.__robot_quat[0] = 0.0
         self.__robot_quat[1] = 0.0
@@ -66,7 +67,7 @@ class CustomEnv(gym.Env):
     
         return [self.__position_robot[0] , self.__position_robot[1],
                 self.__target_point[0]   , self.__target_point[1]  ,
-                self.__move[0]           , self.__move[1]          ,
+                action[0]           , action[1]          ,
                 self.__d_angl_rad]
  
     def __new_reward(self, goal):

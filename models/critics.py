@@ -1,12 +1,12 @@
 import torch
 import torch.nn as nn
-# import torch._dynamo
+import torch._dynamo
 import torch.nn.functional as F
 from settings import (STATE_SIZE, SEED,
                       ACTION_SIZE, LAYER_C1,
                       LAYER_C2)
 import numpy as np
-torch._dynamo.config.suppress_errors = True
+torch._dynamo.config.suppress_errors = False
 
 def hidden_init(layer):
     fan_in = layer.weight.data.size()[0]
@@ -25,9 +25,9 @@ class Critic1(nn.Module):
         self.layer_s = nn.Linear(STATE_SIZE, layers[0])
         self.layer_a = nn.Linear(ACTION_SIZE, layers[0])
         
-        print(f"self.layer_s {self.layer_s}, self.layer_a {self.layer_a}")
+        #print(f"self.layer_s {self.layer_s}, self.layer_a {self.layer_a}")
         self.layer_as = nn.Linear(layers[0] * 2, layers[0])
-        print(f"self.layer_s {self.layer_s}, self.layer_a {self.layer_a} , self.layer_as {self.layer_as}")
+        #print(f"self.layer_s {self.layer_s}, self.layer_a {self.layer_a} , self.layer_as {self.layer_as}")
         self.batch_norm1 = nn.BatchNorm1d(layers[0])
         
         self.layer2 = nn.Linear(layers[0], layers[1])
@@ -47,6 +47,7 @@ class Critic1(nn.Module):
     def forward(self, state, action):
         state_features = F.relu(self.layer_s(state))
         action_features = F.relu(self.layer_a(action))
+        # print(f"state_features.size {state_features.size()}, action_features {action_features.size()}")
         x = F.relu(self.layer_as(torch.cat((state_features, action_features), 1)))
         x = F.relu(self.batch_norm2(self.layer2(x)))
         return self.layer3(x)

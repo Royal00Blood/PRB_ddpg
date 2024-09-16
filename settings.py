@@ -14,7 +14,7 @@ LR_CRITIC = 0.005 # 0.001 to 0.01
 REWARD = 500
 # Параметры среды
 STATE_SIZE  = 7
-ACTION_SIZE = 1
+ACTION_SIZE = 2
 
 ACTION_ = 0.5
 STATE_  = 10.0
