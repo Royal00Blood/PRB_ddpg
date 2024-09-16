@@ -45,6 +45,9 @@ class Critic1(nn.Module):
         self.layer3.weight.data.uniform_(-3e-3, 3e-3)
         
     def forward(self, state, action):
+        print(action.size())
+        print(state.unsqueeze(2))
+        print(state.size())
         state_features = F.relu(self.layer_s(state))
         action_features = F.relu(self.layer_a(action))
         # print(f"state_features.size {state_features.size()}, action_features {action_features.size()}")
