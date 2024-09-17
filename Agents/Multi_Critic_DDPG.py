@@ -58,13 +58,9 @@ class PRB_DDPG_Agent:
             return
        
         states, actions, rewards, next_states, dones = zip(*transitions)
-    
         states = torch.tensor(states + np.random.normal(0, NOISE, size=self.state_size), dtype=torch.float32)
-        
         actions = torch.tensor(actions + np.random.normal(0, NOISE, size=self.action_size), dtype=torch.float32)
-        
         next_states = torch.tensor(next_states + np.random.normal(0, NOISE, size=self.state_size), dtype=torch.float32)
-        
         rewards = torch.tensor(rewards, dtype=torch.float32)
         dones = torch.tensor(dones, dtype=torch.float32)
         weights = torch.tensor(weights, dtype=torch.float32)
@@ -78,9 +74,6 @@ class PRB_DDPG_Agent:
 
         critic1_loss = (weights * nn.MSELoss(reduction='none')(self.critic1(states, actions), target_q_values.detach())).mean()
         critic2_loss = (weights * nn.MSELoss(reduction='none')(self.critic2(states, actions), target_q_values.detach())).mean()
-        
-        # critic1_loss = (weights * nn.MSELoss(reduction='none')(self.critic1(states, actions), target_q_values.detach())).mean()
-        # critic2_loss = (weights * nn.MSELoss(reduction='none')(self.critic2(states, actions), target_q_values.detach())).mean()
         
         self.critic1_optimizer.zero_grad()
         critic1_loss.backward()
