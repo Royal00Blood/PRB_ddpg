@@ -61,7 +61,7 @@ class PRB_DDPG_Agent:
     
         states = torch.tensor(states + np.random.normal(0, NOISE, size=self.state_size), dtype=torch.float32)
         print(f"states{states} , type{type(states)}")
-        actions = torch.tensor(actions + np.random.normal(0, NOISE, size=self.action_size), dtype=torch.float32).unsqueeze(1)
+        actions = torch.tensor(actions + np.random.normal(0, NOISE, size=self.action_size), dtype=torch.float32)
         print(f"action{actions} , type{type(actions)}")
         next_states = torch.tensor(next_states + np.random.normal(0, NOISE, size=self.state_size), dtype=torch.float32)
         print(f"next_states{next_states} , type{type(next_states)}")
