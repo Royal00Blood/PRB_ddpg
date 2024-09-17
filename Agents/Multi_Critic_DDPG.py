@@ -60,11 +60,11 @@ class PRB_DDPG_Agent:
         states, actions, rewards, next_states, dones = zip(*transitions)
     
         states = torch.tensor(states + np.random.normal(0, NOISE, size=self.state_size), dtype=torch.float32)
-        print(f"states{states} , type{type(states)}")
+        
         actions = torch.tensor(actions + np.random.normal(0, NOISE, size=self.action_size), dtype=torch.float32)
-        print(f"action{actions} , type{type(actions)}")
+        
         next_states = torch.tensor(next_states + np.random.normal(0, NOISE, size=self.state_size), dtype=torch.float32)
-        print(f"next_states{next_states} , type{type(next_states)}")
+        
         rewards = torch.tensor(rewards, dtype=torch.float32)
         dones = torch.tensor(dones, dtype=torch.float32)
         weights = torch.tensor(weights, dtype=torch.float32)
@@ -133,9 +133,9 @@ class PRB_DDPG_Agent:
             env.set_number(episode)
             i=0
             while not done:
-                print (state)
+                
                 state_tensor = torch.tensor(state, dtype=torch.float32)#
-                print(state_tensor)
+                
                 action = self.actor(state_tensor).squeeze().detach().numpy()
                 next_state, reward, done, _ = env.step(action)
                 i+=1

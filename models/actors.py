@@ -63,7 +63,7 @@ class Actor_1(nn.Module):
         action = self.layer_5(x)
         #action = self.batch_norm_5(action)
         action = torch.tanh(action) * ACTION_
-        print(f"action1:{action.size()}")
+        
         return action
 
 
@@ -106,7 +106,7 @@ class Actor_2(nn.Module):
         x = F.relu(self.batch_norm_3(self.dropout(self.layer_3(x))))
         x = F.relu(self.batch_norm_4(self.layer_4(x)))
         action = torch.tanh(self.batch_norm_5(self.layer_5(x))) * ACTION_
-        print(f"action2:{action.size()}")
+        
         return action
 
     
