@@ -69,12 +69,11 @@ class PRB_DDPG_Agent:
         next_actions   = self.actor_target(next_states)
         next_q_values1 = self.critic1_target(next_states, next_actions)
         next_q_values2 = self.critic2_target(next_states, next_actions)
-        
         target_q_values = rewards + self.gamma * (1 - dones) * torch.min(next_q_values1, next_q_values2)  # Усреднение ошибок
-
+        ###
         critic1_loss = (weights * nn.MSELoss(reduction='none')(self.critic1(states, actions), target_q_values.detach())).mean()
         critic2_loss = (weights * nn.MSELoss(reduction='none')(self.critic2(states, actions), target_q_values.detach())).mean()
-        
+        ###
         self.critic1_optimizer.zero_grad()
         critic1_loss.backward()
         self.critic1_optimizer.step()
