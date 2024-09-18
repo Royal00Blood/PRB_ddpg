@@ -131,7 +131,7 @@ class PRB_DDPG_Agent:
                 action = self.actor(state_tensor).squeeze().detach().numpy()
                 next_state, reward, done, _ = env.step(action)
                 i+=1
-                if i>1000:
+                if i>100:
                     reward -= 500
                     break
                 self.replay_buffer.push(state, action, reward, next_state, done)
