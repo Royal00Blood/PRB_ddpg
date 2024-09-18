@@ -28,7 +28,7 @@ AREA_GENERATION = AREA_DEFEAT - 0.2
 TIME = 0.1
 
 # Параметры обучения
-EPISODES = 25
+EPISODES = 2500
 EP_STEPS = 500
 
 #  Параметры проверки

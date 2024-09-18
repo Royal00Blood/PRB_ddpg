@@ -129,13 +129,13 @@ class PRB_DDPG_Agent:
             while not done:
                 
                 state_tensor = torch.tensor(state, dtype=torch.float32)#
-                
+    
                 action = self.actor(state_tensor).squeeze().detach().numpy()
                 next_state, reward, done, _ = env.step(action)
-                i+=1
-                if i>100:
-                    reward -= 500
-                    break
+                # i+=1
+                # if i>1000:
+                #     reward -= 500
+                #     break
                 self.replay_buffer.push(state, action, reward, next_state, done)
                 if len(self.replay_buffer) > self.batch_size:
                     self.update()
