@@ -13,6 +13,7 @@ from torch.utils.tensorboard import SummaryWriter
 from torchrl.data import PrioritizedReplayBuffer
 from buffers.PrioritizedReplayBuffer import PrioritizedReplayBuffer
 import time
+import torch.nn.functional as F
 device = "cuda"
 
 class PRB_DDPG_Agent:
@@ -71,6 +72,7 @@ class PRB_DDPG_Agent:
         next_q_values2 = self.critic2_target(next_states, next_actions)
         target_q_values = rewards + self.gamma * (1 - dones) * torch.min(next_q_values1, next_q_values2)  # Усреднение ошибок
         ###
+        
         critic1_loss = (weights * nn.MSELoss(reduction='none')(self.critic1(states, actions), target_q_values.detach())).mean()
         critic2_loss = (weights * nn.MSELoss(reduction='none')(self.critic2(states, actions), target_q_values.detach())).mean()
         ###
@@ -89,7 +91,7 @@ class PRB_DDPG_Agent:
         self.actor_optimizer.step()
         
         # Update Priorities
-        new_priorities = (critic1_loss.detach().cpu().numpy() + 1e-5)
+        new_priorities = (critic1_loss.detach().cpu().numpy() + critic2_loss.detach().cpu().numpy() + 1e-5) / 2
         self.replay_buffer.update_priority(indices, new_priorities)
 
         # Update Target Networks
@@ -108,10 +110,10 @@ class PRB_DDPG_Agent:
 
     def train(self, env, num_episodes=EPISODES, ep_steps=EP_STEPS):
         #Загрузка весов и моделей для продолжения обучения
-        if os.path.exists('actor_weights.pth') and os.path.exists('critic_weights.pth'):
-            self.actor.load_state_dict(torch.load('actor_weights.pth'))
-            self.critic1.load_state_dict(torch.load('critic1_weights.pth'))
-            self.critic2.load_state_dict(torch.load('critic2_weights.pth'))
+        # if os.path.exists('actor_weights.pth') and os.path.exists('critic_weights.pth'):
+        #     self.actor.load_state_dict(torch.load('actor_weights.pth'))
+        #     self.critic1.load_state_dict(torch.load('critic1_weights.pth'))
+        #     self.critic2.load_state_dict(torch.load('critic2_weights.pth'))
         
         start_time = time.time()
         episode_rewards = []
