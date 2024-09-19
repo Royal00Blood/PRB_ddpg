@@ -103,13 +103,6 @@ class CustomEnv(gym.Env):
                                    self.__target_point[0], self.__target_point[1],
                                    self.__d_angl_rad
                                    ).get_angle_dev()
-
-        # if self.__delta_angle == 0.0:
-        #     return 17
-        # elif abs(self.__delta_angle) < np.pi / 2 and abs(self.__delta_angle) < abs(self.__delta_angle_old):
-        #     return -10.83 * self.__delta_angle + 17
-        # else:
-        #     return -17
         if self.__delta_angle == 0.0:
             return 17
         elif abs(self.__delta_angle) < np.pi / 2 and abs(self.__delta_angle) < abs(self.__delta_angle_old):
@@ -128,7 +121,7 @@ class CustomEnv(gym.Env):
                self.__target_point[1] + AREA_WIN > self.__position_robot[1] > self.__target_point[1] - AREA_WIN):
             goal = True
             self.done = True
-            # self.graf_move()
+            self.graf_move()
             print("Target_True")
             return  goal
         else:

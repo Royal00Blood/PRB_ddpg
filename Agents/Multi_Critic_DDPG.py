@@ -8,13 +8,14 @@ import os
 from settings import (STATE_SIZE, ACTION_SIZE, LR_ACTOR,
                       LR_CRITIC,BATCH_SIZE,GAMMA,BUFFER_SIZE,
                       ALPHA,TAU,EPISODES,EP_STEPS,TEST_EP_STEPS,
-                      TEST_EPISODES, NOISE)
+                      TEST_EPISODES, ACTION_)
 from torch.utils.tensorboard import SummaryWriter
 from torchrl.data import PrioritizedReplayBuffer
 from buffers.PrioritizedReplayBuffer import PrioritizedReplayBuffer
 import time
 import torch.nn.functional as F
 device = "cuda"
+from noise import Noise
 
 class PRB_DDPG_Agent:
     
@@ -37,44 +38,58 @@ class PRB_DDPG_Agent:
         self.tau = tau
         self.buffer_size = buffer_size
         self.batch_size = batch_size
-        
+        self.action_scale = ACTION_
+        self.replay_buffer = PrioritizedReplayBuffer(buffer_size, alpha)
         self.writer = SummaryWriter()
         self.global_step = 0
-        self.replay_buffer = PrioritizedReplayBuffer(buffer_size, alpha)
-        
+        self.noise = Noise(self.action_size)
         self.actor = torch.compile(Actor_1(state_size, action_size))
-        self.critic1 = torch.compile(Critic1(state_size, action_size))
-        self.critic2 = torch.compile(Critic2(state_size, action_size)) # Второй критик
+        self.critic1 = torch.compile(Critic1(state_size + action_size))
+        self.critic2 = torch.compile(Critic2(state_size + action_size)) 
+        
         self.actor_target = torch.compile(Actor_1(state_size, action_size))
-        self.critic1_target = torch.compile(Critic1(state_size, action_size))
-        self.critic2_target = torch.compile(Critic2(state_size, action_size))  # Целевая сеть второго критика .to device
+        self.critic1_target = torch.compile(Critic1(state_size + action_size))
+        self.critic2_target = torch.compile(Critic2(state_size + action_size))  # .to device
         
         self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=self.lr_actor)
         self.critic1_optimizer = optim.Adam(self.critic1.parameters(), lr=self.lr_critic)
         self.critic2_optimizer = optim.Adam(self.critic2.parameters(), lr=self.lr_critic)  # Оптимизатор для второго критика
     
+    def get_action(self,state):
+        state = torch.tensor(state, dtype=torch.float32)
+        pred_action = self.actor(state).detach().numpy()
+        action = self.action_scale * (pred_action + self.noise.sample())
+        return np.clip(action, -self.action_scale, self.action_scale)
+        
     def update(self):
         transitions, indices, weights = self.replay_buffer.sample(self.batch_size)
         if transitions is None:
             return
        
         states, actions, rewards, next_states, dones = zip(*transitions)
-        states = torch.tensor(states + np.random.normal(0, NOISE, size=self.state_size), dtype=torch.float32)
-        actions = torch.tensor(actions + np.random.normal(0, NOISE, size=self.action_size), dtype=torch.float32)
-        next_states = torch.tensor(next_states + np.random.normal(0, NOISE, size=self.state_size), dtype=torch.float32)
+        
+        states = torch.tensor(states, dtype=torch.float32)
+        actions = torch.tensor(actions, dtype=torch.float32)
+        next_states = torch.tensor(next_states, dtype=torch.float32)
         rewards = torch.tensor(rewards, dtype=torch.float32)
         dones = torch.tensor(dones, dtype=torch.float32)
         weights = torch.tensor(weights, dtype=torch.float32)
 
         # Update Critic
         next_actions   = self.actor_target(next_states)
-        next_q_values1 = self.critic1_target(next_states, next_actions)
-        next_q_values2 = self.critic2_target(next_states, next_actions)
-        target_q_values = rewards + self.gamma * (1 - dones) * torch.min(next_q_values1, next_q_values2)  # Усреднение ошибок
+        next_states_action = torch.cat((next_states, next_actions),dim=1)
+        next_q_values1 = self.critic1_target(next_states_action)
+        next_q_values2 = self.critic2_target(next_states_action)
+        next_q_values_min = torch.min(next_q_values1, next_q_values2)
+        target_q_values=[]
+        for i in range(len(rewards)):
+            target_q_values.append(rewards[i] + self.gamma * (1 - dones[i]) * next_q_values_min[i])  # Усреднение ошибок
+        target_q_values = torch.tensor(target_q_values)
         ###
-        
-        critic1_loss = (weights * nn.MSELoss(reduction='none')(self.critic1(states, actions), target_q_values.detach())).mean()
-        critic2_loss = (weights * nn.MSELoss(reduction='none')(self.critic2(states, actions), target_q_values.detach())).mean()
+        states_action = torch.cat((states, actions), dim=1)
+        # print(f"next_c={self.critic1(states_action).size()} , next_a={target_q_values.detach().size()}")
+        critic1_loss = (weights * nn.MSELoss(reduction='none')(self.critic1(states_action), target_q_values.detach().unsqueeze(1))).mean()
+        critic2_loss = (weights * nn.MSELoss(reduction='none')(self.critic2(states_action), target_q_values.detach().unsqueeze(1))).mean()
         ###
         self.critic1_optimizer.zero_grad()
         critic1_loss.backward()
@@ -85,7 +100,8 @@ class PRB_DDPG_Agent:
         self.critic2_optimizer.step()
 
         # Update Actor
-        actor_loss = -(weights * self.critic1(states, self.actor(states))).mean()  # Используем первый критик для обновления актера
+        states_a_actor = torch.cat((states, self.actor(states)), dim=1)
+        actor_loss = -(weights * self.critic1(states_a_actor)).mean()  # Используем первый критик для обновления актера
         self.actor_optimizer.zero_grad()
         actor_loss.backward()
         self.actor_optimizer.step()
@@ -127,12 +143,10 @@ class PRB_DDPG_Agent:
             env.set_number(episode)
             i=0
             while not done:
-                
-                state_tensor = torch.tensor(state, dtype=torch.float32)#
-    
-                action = self.actor(state_tensor).squeeze().detach().numpy()
+                action =self.get_action(state) 
+                #self.actor(state_tensor).squeeze().detach().numpy()
                 next_state, reward, done, _ = env.step(action)
-                # i+=1
+                i+=1
                 # if i>1000:
                 #     reward -= 500
                 #     break
