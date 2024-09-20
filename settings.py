@@ -10,7 +10,7 @@ TAU   = 0.01  # 0.001 to 0.01
 LR_ACTOR  = 0.0006 # 0.0001 to 0.001
 LR_CRITIC = 0.004 # 0.001 to 0.01
 
-
+WEIGHT_DEC = 0.5 # 
 REWARD = 500
 # Параметры среды
 STATE_SIZE  = 7

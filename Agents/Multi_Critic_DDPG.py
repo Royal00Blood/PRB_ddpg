@@ -8,7 +8,7 @@ import os
 from settings import (STATE_SIZE, ACTION_SIZE, LR_ACTOR,
                       LR_CRITIC,BATCH_SIZE,GAMMA,BUFFER_SIZE,
                       ALPHA,TAU,EPISODES,EP_STEPS,TEST_EP_STEPS,
-                      TEST_EPISODES, ACTION_)
+                      TEST_EPISODES, ACTION_,WEIGHT_DEC)
 from torch.utils.tensorboard import SummaryWriter
 from torchrl.data import PrioritizedReplayBuffer
 from buffers.PrioritizedReplayBuffer import PrioritizedReplayBuffer
@@ -18,18 +18,17 @@ device = "cuda"
 from noise import Noise
 
 class PRB_DDPG_Agent:
-    
     def __init__(self, 
                  state_size=STATE_SIZE, 
                  action_size=ACTION_SIZE,
                  lr_actor=LR_ACTOR, 
                  lr_critic=LR_CRITIC, 
-                 gamma=GAMMA,
-                 tau=TAU, 
+                 gamma=GAMMA,tau=TAU, 
                  buffer_size=BUFFER_SIZE, 
                  batch_size=BATCH_SIZE, 
-                 alpha=ALPHA):
-        
+                 alpha=ALPHA,
+                 weight_decay = WEIGHT_DEC
+                 ):
         self.state_size = state_size
         self.action_size = action_size
         self.lr_actor = lr_actor
@@ -43,82 +42,75 @@ class PRB_DDPG_Agent:
         self.writer = SummaryWriter()
         self.global_step = 0
         self.noise = Noise(self.action_size)
+        self.weight_decay = weight_decay
         self.actor = torch.compile(Actor_1(state_size, action_size))
         self.critic1 = torch.compile(Critic1(state_size + action_size))
         self.critic2 = torch.compile(Critic2(state_size + action_size)) 
-        
         self.actor_target = torch.compile(Actor_1(state_size, action_size))
         self.critic1_target = torch.compile(Critic1(state_size + action_size))
         self.critic2_target = torch.compile(Critic2(state_size + action_size))  # .to device
-        
-        self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=self.lr_actor)
-        self.critic1_optimizer = optim.Adam(self.critic1.parameters(), lr=self.lr_critic)
-        self.critic2_optimizer = optim.Adam(self.critic2.parameters(), lr=self.lr_critic)  # Оптимизатор для второго критика
+        self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=self.lr_actor,weight_decay=self.weight_decay)
+        self.critic1_optimizer = optim.Adam(self.critic1.parameters(), lr=self.lr_critic,weight_decay=self.weight_decay)
+        self.critic2_optimizer = optim.Adam(self.critic2.parameters(), lr=self.lr_critic,weight_decay=self.weight_decay)  # Оптимизатор для второго критика
+    
     
     def get_action(self,state):
         state = torch.tensor(state, dtype=torch.float32)
-        pred_action = self.actor(state).detach().numpy()
-        action = self.action_scale * (pred_action + self.noise.sample())
+        action = self.action_scale * (self.actor(state).detach().numpy() + self.noise.sample())
         return np.clip(action, -self.action_scale, self.action_scale)
-        
+    
+    def soft_update(self, source, target, tau):
+        """Softly update target network parameters."""
+        for target_param, param in zip(target.parameters(), source.parameters()):
+            target_param.data.copy_(target_param.data * (1.0 - tau) + param.data * tau)
+            
+    def update_target_networks(self):
+        """Update the target networks."""
+        self.soft_update(self.actor, self.actor_target, self.tau)
+        self.soft_update(self.critic1, self.critic1_target, self.tau)
+        self.soft_update(self.critic2, self.critic2_target, self.tau)
+    
     def update(self):
         transitions, indices, weights = self.replay_buffer.sample(self.batch_size)
         if transitions is None:
             return
-       
         states, actions, rewards, next_states, dones = zip(*transitions)
-        
         states = torch.tensor(states, dtype=torch.float32)
         actions = torch.tensor(actions, dtype=torch.float32)
         next_states = torch.tensor(next_states, dtype=torch.float32)
         rewards = torch.tensor(rewards, dtype=torch.float32)
         dones = torch.tensor(dones, dtype=torch.float32)
         weights = torch.tensor(weights, dtype=torch.float32)
-
+        
         # Update Critic
-        next_actions   = self.actor_target(next_states)
-        next_states_action = torch.cat((next_states, next_actions),dim=1)
+        next_states_action = torch.cat((next_states, self.actor_target(next_states)),dim=1)
         next_q_values1 = self.critic1_target(next_states_action)
         next_q_values2 = self.critic2_target(next_states_action)
-        next_q_values_min = torch.min(next_q_values1, next_q_values2)
         target_q_values=[]
         for i in range(len(rewards)):
-            target_q_values.append(rewards[i] + self.gamma * (1 - dones[i]) * next_q_values_min[i])  # Усреднение ошибок
+            target_q_values.append(rewards[i] + self.gamma * (1 - dones[i]) * torch.min(next_q_values1, next_q_values2)[i])  # Усреднение ошибок
         target_q_values = torch.tensor(target_q_values)
         ###
         states_action = torch.cat((states, actions), dim=1)
-        # print(f"next_c={self.critic1(states_action).size()} , next_a={target_q_values.detach().size()}")
         critic1_loss = (weights * nn.MSELoss(reduction='none')(self.critic1(states_action), target_q_values.detach().unsqueeze(1))).mean()
         critic2_loss = (weights * nn.MSELoss(reduction='none')(self.critic2(states_action), target_q_values.detach().unsqueeze(1))).mean()
-        ###
         self.critic1_optimizer.zero_grad()
         critic1_loss.backward()
         self.critic1_optimizer.step()
-
         self.critic2_optimizer.zero_grad()
         critic2_loss.backward()
         self.critic2_optimizer.step()
-
         # Update Actor
         states_a_actor = torch.cat((states, self.actor(states)), dim=1)
         actor_loss = -(weights * self.critic1(states_a_actor)).mean()  # Используем первый критик для обновления актера
         self.actor_optimizer.zero_grad()
         actor_loss.backward()
         self.actor_optimizer.step()
-        
         # Update Priorities
         new_priorities = (critic1_loss.detach().cpu().numpy() + critic2_loss.detach().cpu().numpy() + 1e-5) / 2
         self.replay_buffer.update_priority(indices, new_priorities)
-
         # Update Target Networks
-        for target_param, param in zip(self.actor_target.parameters(), self.actor.parameters()):
-            target_param.data.copy_(self.tau * param.data + (1.0 - self.tau) * target_param.data)
-        for target_param, param in zip(self.critic1_target.parameters(), self.critic1.parameters()):
-            target_param.data.copy_(self.tau * param.data + (1.0 - self.tau) * target_param.data)
-        for target_param, param in zip(self.critic2_target.parameters(), self.critic2.parameters()):
-            target_param.data.copy_(self.tau * param.data + (1.0 - self.tau) * target_param.data)
-            
-        # Log metrics
+        self.update_target_networks()
         self.writer.add_scalar('Actor Loss'  , actor_loss.item()  , self.global_step)
         self.writer.add_scalar('Critic1 Loss', critic1_loss.item(), self.global_step)
         self.writer.add_scalar('Critic2 Loss', critic2_loss.item(), self.global_step)
