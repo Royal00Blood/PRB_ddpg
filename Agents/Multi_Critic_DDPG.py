@@ -143,10 +143,16 @@ class PRB_DDPG_Agent:
             episode_reward = 0
             env.set_number(episode)
             i=0
+            
             while not done:
                 action =self.get_action(state) 
                 next_state, reward, done, _ = env.step(action)
-
+                
+                if i>300:
+                    reward-=500
+                    break
+                i+=1
+                
                 self.replay_buffer.push(state, action, reward, next_state, done)
                 if len(self.replay_buffer) > self.batch_size:
                     self.update()
