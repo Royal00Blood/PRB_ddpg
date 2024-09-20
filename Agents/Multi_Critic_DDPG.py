@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import numpy as np
-from models.actors import Actor_1, Actor_2
+from models.actors import Actor_1
 from models.critics import Critic1, Critic2
 import os
 from settings import (STATE_SIZE, ACTION_SIZE, LR_ACTOR,
@@ -54,8 +54,7 @@ class PRB_DDPG_Agent:
         self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=self.lr_actor,weight_decay=self.weight_decay)
         self.critic1_optimizer = optim.Adam(self.critic1.parameters(), lr=self.lr_critic,weight_decay=self.weight_decay)
         self.critic2_optimizer = optim.Adam(self.critic2.parameters(), lr=self.lr_critic,weight_decay=self.weight_decay)  # Оптимизатор для второго критика
-    
-    
+        
     def get_action(self,state):
         state = torch.tensor(state, dtype=torch.float32).to(device)
         action = self.action_scale * (self.actor(state).detach().cpu().numpy() + self.noise.sample())
