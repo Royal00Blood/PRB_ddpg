@@ -77,12 +77,12 @@ class PRB_DDPG_Agent:
         if transitions is None:
             return
         states, actions, rewards, next_states, dones = zip(*transitions)
-        states = torch.tensor(states, dtype=torch.float32)
-        actions = torch.tensor(actions, dtype=torch.float32)
-        next_states = torch.tensor(next_states, dtype=torch.float32)
-        rewards = torch.tensor(rewards, dtype=torch.float32)
-        dones = torch.tensor(dones, dtype=torch.float32)
-        weights = torch.tensor(weights, dtype=torch.float32)
+        states = torch.tensor(np.array(states), dtype=torch.float32)
+        actions = torch.tensor(np.array(actions), dtype=torch.float32)
+        next_states = torch.tensor(np.array(next_states), dtype=torch.float32)
+        rewards = torch.tensor(np.array(rewards), dtype=torch.float32)
+        dones = torch.tensor(np.array(dones), dtype=torch.float32)
+        weights = torch.tensor(np.array(weights), dtype=torch.float32)
         
         states = states.to(device)
         actions = actions.to(device)
@@ -123,7 +123,7 @@ class PRB_DDPG_Agent:
         self.writer.add_scalar('Actor Loss'  , actor_loss.item()  , self.global_step)
         self.writer.add_scalar('Critic1 Loss', critic1_loss.item(), self.global_step)
         self.writer.add_scalar('Critic2 Loss', critic2_loss.item(), self.global_step)
-       # self.writer.add_scalar('Average Reward', np.mean(rewards), self.global_step)
+        self.writer.add_scalar('Average Reward', torch.mean(rewards), self.global_step)
         self.global_step += 1
 
     def train(self, env, num_episodes=EPISODES, ep_steps=EP_STEPS):
@@ -155,10 +155,11 @@ class PRB_DDPG_Agent:
             avg_reward = np.mean(episode_rewards[-100:])
             
             print(f"Episode {episode+1}/{num_episodes}, Reward: {episode_reward:.2f}, Avg Reward: {avg_reward:.2f}")
+
             if episode % 10 == 0:
                 torch.save(self.actor.state_dict()  , 'actor_weights.pth')
                 torch.save(self.critic1.state_dict(), 'critic1_weights.pth')
-                torch.save(self.critic2.state_dict(),'critic2_weights.pth')
+                torch.save(self.critic2.state_dict(), 'critic2_weights.pth')
             
         # Сохранение весов и моделей
         torch.save(self.actor.state_dict()  ,'actor_weights.pth')
@@ -193,20 +194,14 @@ class PRB_DDPG_Agent:
             total_reward = 0
             for step in range(max_steps):
                 # Выбираем действие на основе текущего состояния
-                
-                state_tensor = torch.tensor(state, dtype=torch.float32).unsqueeze(0)
-                action = self.actor(state_tensor).squeeze().detach().numpy()
-                
+                action = self.get_action(state)
                 # Применяем действие в среде и получаем новое состояние, награду и флаг завершения
                 next_state, reward, done, _ = env.step(action)
-                
                 total_reward += reward
-                
                 if done:
                     break
-                
                 state = next_state
-            
+                
             rewards.append(total_reward)
             print(f"Episode {episode+1}, Reward: {total_reward:.2f}")
         
