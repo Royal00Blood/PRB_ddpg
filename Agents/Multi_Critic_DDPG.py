@@ -120,12 +120,14 @@ class PRB_DDPG_Agent:
         self.replay_buffer.update_priority(indices, new_priorities)
         # Update Target Networks
         self.update_target_networks()
+        
         self.writer.add_scalar('Actor Loss'  , actor_loss.item()  , self.global_step)
         self.writer.add_scalar('Critic1 Loss', critic1_loss.item(), self.global_step)
         self.writer.add_scalar('Critic2 Loss', critic2_loss.item(), self.global_step)
         self.writer.add_scalar('Average Reward', torch.mean(rewards), self.global_step)
         self.global_step += 1
-
+        self.writer.close()
+        
     def train(self, env, num_episodes=EPISODES, ep_steps=EP_STEPS):
         #Загрузка весов и моделей для продолжения обучения
         if os.path.exists('actor_weights.pth') and os.path.exists('critic_weights.pth'):
@@ -156,7 +158,7 @@ class PRB_DDPG_Agent:
             
             print(f"Episode {episode+1}/{num_episodes}, Reward: {episode_reward:.2f}, Avg Reward: {avg_reward:.2f}")
 
-            if episode % 10 == 0:
+            if episode % 5 == 0:
                 torch.save(self.actor.state_dict()  , 'actor_weights.pth')
                 torch.save(self.critic1.state_dict(), 'critic1_weights.pth')
                 torch.save(self.critic2.state_dict(), 'critic2_weights.pth')
@@ -166,7 +168,7 @@ class PRB_DDPG_Agent:
         torch.save(self.critic1.state_dict(),  'critic1_weights.pth')
         torch.save(self.critic2.state_dict(),  'critic2_weights.pth')
         
-        self.writer.close()
+        
         end_time = time.time()
         print(f"Training time: {end_time - start_time:.2f} seconds")
         return episode_rewards
