@@ -12,17 +12,21 @@ tau = 0.001
 lactor= 0.0001
 lcritic= 0.001
 env = env_learn()
-for i in range(224):
-    batch_s += i
-    for g in range(99):
-        gamma += g/1000 
+for i in range(22):
+    batch_s += 10
+    for g in range(9):
+        gamma += 0.01 
         for t in range(10):
-            tau += t/1000
+            tau += 0.001
             for la in range(10):
-                lactor += la/10000
+                lactor += 0.0001
                 for lc in range(10):
-                    lcritic += lc/1000
+                    lcritic += 0.001
                     env = env_learn()
                     agent = Agent(batch_size=batch_s, gamma=gamma, tau=tau, lr_actor=lactor, lr_critic=lcritic)
                     agent.train(env, num_episodes =100)
+                lcritic= 0.001
+            lactor= 0.0001
+        tau = 0.001
+    gamma = 0.9
 #agent.test(env,max_episodes=TEST_EPISODES,max_steps=TEST_EP_STEPS)
