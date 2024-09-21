@@ -39,7 +39,7 @@ class PRB_DDPG_Agent:
         self.batch_size = batch_size
         self.action_scale = ACTION_
         self.replay_buffer = PrioritizedReplayBuffer(buffer_size, alpha)
-        self.writer = SummaryWriter()
+        self.writer = SummaryWriter(comment=f"lr_actor={lr_actor}, lr_critic={lr_critic}, gamma={gamma}, tau={tau}, buffer_size={buffer_size}, batch_size={batch_size}")
         self.global_step = 0
         self.noise = Noise(self.action_size)
         self.weight_decay = weight_decay
@@ -129,10 +129,10 @@ class PRB_DDPG_Agent:
         
     def train(self, env, num_episodes=EPISODES, ep_steps=EP_STEPS):
         #Загрузка весов и моделей для продолжения обучения
-        if os.path.exists('actor_weights.pth') and os.path.exists('critic_weights.pth'):
-            self.actor.load_state_dict(torch.load('actor_weights.pth'))
-            self.critic1.load_state_dict(torch.load('critic1_weights.pth'))
-            self.critic2.load_state_dict(torch.load('critic2_weights.pth'))
+        # if os.path.exists('actor_weights.pth') and os.path.exists('critic_weights.pth'):
+        #     self.actor.load_state_dict(torch.load('actor_weights.pth'))
+        #     self.critic1.load_state_dict(torch.load('critic1_weights.pth'))
+        #     self.critic2.load_state_dict(torch.load('critic2_weights.pth'))
         
         start_time = time.time()
         episode_rewards = []
@@ -148,7 +148,7 @@ class PRB_DDPG_Agent:
                 action =self.get_action(state) 
                 next_state, reward, done, _ = env.step(action)
                 
-                if i>300:
+                if i>200:
                     reward-=500
                     break
                 i+=1
