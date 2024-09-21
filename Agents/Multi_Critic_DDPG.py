@@ -123,9 +123,9 @@ class PRB_DDPG_Agent:
         self.writer.add_scalar('Actor Loss'  , actor_loss.item()  , self.global_step)
         self.writer.add_scalar('Critic1 Loss', critic1_loss.item(), self.global_step)
         self.writer.add_scalar('Critic2 Loss', critic2_loss.item(), self.global_step)
-        self.writer.add_scalar('Average Reward', torch.mean(rewards), self.global_step)
+        #self.writer.add_scalar('Average Reward', torch.mean(rewards), self.global_step)
         self.global_step += 1
-        self.writer.close()
+       
         
     def train(self, env, num_episodes=EPISODES, ep_steps=EP_STEPS):
         #Загрузка весов и моделей для продолжения обучения
@@ -148,7 +148,7 @@ class PRB_DDPG_Agent:
                 action =self.get_action(state) 
                 next_state, reward, done, _ = env.step(action)
                 
-                if i>200:
+                if i>150:
                     reward-=500
                     break
                 i+=1
@@ -173,7 +173,7 @@ class PRB_DDPG_Agent:
         torch.save(self.critic1.state_dict(),  'critic1_weights.pth')
         torch.save(self.critic2.state_dict(),  'critic2_weights.pth')
         
-        
+        self.writer.close()
         end_time = time.time()
         print(f"Training time: {end_time - start_time:.2f} seconds")
         return episode_rewards

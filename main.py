@@ -22,6 +22,7 @@ for i in range(224):
                 lactor += la/10000
                 for lc in range(10):
                     lcritic += lc/1000
+                    env = env_learn()
                     agent = Agent(batch_size=batch_s, gamma=gamma, tau=tau, lr_actor=lactor, lr_critic=lcritic)
                     agent.train(env, num_episodes =100)
 #agent.test(env,max_episodes=TEST_EPISODES,max_steps=TEST_EP_STEPS)
