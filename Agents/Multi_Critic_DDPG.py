@@ -148,7 +148,7 @@ class PRB_DDPG_Agent:
                 action =self.get_action(state) 
                 next_state, reward, done, _ = env.step(action)
                 
-                if i>200:
+                if i>100:
                     break
                 i+=1
                 

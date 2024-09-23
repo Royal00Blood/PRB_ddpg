@@ -65,5 +65,34 @@ class Actor_1(nn.Module):
         return action
 
 
-
-    
+class Actor2(nn.Module):
+    def __init__(self, state_dim, action_dims,action_max,layer_sizes):
+        super(Actor2, self).__init__()
+        self.state_dim = state_dim
+        self.action_dims = action_dims
+        self.action_max = action_max
+        self.layer_sizes = layer_sizes
+        
+        # Общие слои
+        self.layer_1 = nn.Linear(state_dim, layer_sizes[0])
+        self.layer_2 = nn.Linear(layer_sizes[0], layer_sizes[1])
+        
+        # Отдельные слои для каждого действия
+        self.action_layers = nn.ModuleList([
+            nn.Linear(layer_sizes[1], action_dim) for action_dim in action_dims
+        ])
+    def reset_weights(self):
+        nn.init.kaiming_normal_(self.layer_1.weight, mode='fan_in',nonlinearity='relu')
+        nn.init.kaiming_normal_(self.layer_2.weight, mode='fan_in',nonlinearity='relu')
+        nn.init.xavier_uniform_(self.action_layers.weight)
+        
+    def forward(self, state):
+        x = F.relu(self.fc1(state))
+        x = F.relu(self.fc2(x))
+        
+        actions = []
+        for layer in self.action_layers:
+            action = torch.tanh(layer(x))
+            actions.append(action)
+        
+        return actions
