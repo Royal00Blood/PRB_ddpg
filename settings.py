@@ -42,6 +42,6 @@ SEED = 200
          #[ly1, ly2, ly3(v/w), ly4(v/w), ly5(v/w)] 
 LAYER_A1 = [300, 150, 200]
 LAYER_A2 = [400, 250, 300]
-LAYER_C1 = [250,200]
-LAYER_C2 = [300,150]
+LAYER_C1 = [250, 200]
+LAYER_C2 = [300, 150]
 
