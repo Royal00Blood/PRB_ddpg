@@ -23,7 +23,8 @@ class PRB_DDPG_Agent:
                  action_size=ACTION_SIZE,
                  lr_actor=LR_ACTOR, 
                  lr_critic=LR_CRITIC, 
-                 gamma=GAMMA,tau=TAU, 
+                 gamma=GAMMA,
+                 tau=TAU, 
                  buffer_size=BUFFER_SIZE, 
                  batch_size=BATCH_SIZE, 
                  alpha=ALPHA,
@@ -37,7 +38,7 @@ class PRB_DDPG_Agent:
         self.tau = tau
         self.buffer_size = buffer_size
         self.batch_size = batch_size
-        self.action_scale = ACTION_
+        self.action_max = ACTION_
         self.replay_buffer = PrioritizedReplayBuffer(buffer_size, alpha)
         self.writer = SummaryWriter(comment=f"lr_actor={lr_actor}, lr_critic={lr_critic}, gamma={gamma}, tau={tau}, buffer_size={buffer_size}, batch_size={batch_size}")
         self.global_step = 0
@@ -45,20 +46,21 @@ class PRB_DDPG_Agent:
         self.weight_decay = weight_decay
         
         self.actor = torch.compile(Actor_1(state_size, action_size)).to(device)
-        self.critic1 = torch.compile(Critic1(state_size + action_size)).to(device)
-        self.critic2 = torch.compile(Critic2(state_size + action_size)).to(device)
-        self.actor_target = torch.compile(Actor_1(state_size, action_size)).to(device)
-        self.critic1_target = torch.compile(Critic1(state_size + action_size)).to(device)
-        self.critic2_target = torch.compile(Critic2(state_size + action_size)).to(device)
+        self.critic1 = torch.compile(Critic1(state_size, action_size)).to(device)
+        self.critic2 = torch.compile(Critic2(state_size, action_size)).to(device)
         
-        self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=self.lr_actor,weight_decay=self.weight_decay)
-        self.critic1_optimizer = optim.Adam(self.critic1.parameters(), lr=self.lr_critic,weight_decay=self.weight_decay)
-        self.critic2_optimizer = optim.Adam(self.critic2.parameters(), lr=self.lr_critic,weight_decay=self.weight_decay)  # Оптимизатор для второго критика
+        self.actor_target = torch.compile(Actor_1(state_size, action_size)).to(device)
+        self.critic1_target = torch.compile(Critic1(state_size, action_size)).to(device)
+        self.critic2_target = torch.compile(Critic2(state_size, action_size)).to(device)
+        
+        self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=self.lr_actor, weight_decay=self.weight_decay)
+        self.critic1_optimizer = optim.Adam(self.critic1.parameters(), lr=self.lr_critic, weight_decay=self.weight_decay)
+        self.critic2_optimizer = optim.Adam(self.critic2.parameters(), lr=self.lr_critic, weight_decay=self.weight_decay)  # Оптимизатор для второго критика
         
     def get_action(self,state):
         state = torch.tensor(state, dtype=torch.float32).to(device)
-        action = self.action_scale * (self.actor(state).detach().cpu().numpy() + self.noise.sample())
-        return np.clip(action, -self.action_scale, self.action_scale)
+        action = self.actor(state).detach().cpu().numpy() + self.noise.sample()
+        return action
     
     def soft_update(self, source, target, tau):
         """Softly update target network parameters."""
@@ -91,23 +93,25 @@ class PRB_DDPG_Agent:
         weights = weights.to(device)
 
         # Update Critic
-        next_states_action = torch.cat((next_states, self.actor_target(next_states)),dim=1)
-        next_q_values1 = self.critic1_target(next_states_action)
-        next_q_values2 = self.critic2_target(next_states_action)
+        #next_states_action = torch.cat((next_states, self.actor_target(next_states)),dim=1)
+        action = self.actor_target(next_states)
+        next_q_values1 = self.critic1_target(action=action,state=next_states)
+        next_q_values2 = self.critic2_target(action=action,state=next_states)
         target_q_values=[]
         for i in range(len(rewards)):
             target_q_values.append(rewards[i] + self.gamma * (1 - dones[i]) * torch.min(next_q_values1, next_q_values2)[i])  # Усреднение ошибок
         target_q_values = torch.tensor(target_q_values).to(device)
         ###
-        states_action = torch.cat((states, actions), dim=1).to(device)
-        critic1_loss = (weights * nn.MSELoss(reduction='none')(self.critic1(states_action), target_q_values.detach().unsqueeze(1))).mean()
-        critic2_loss = (weights * nn.MSELoss(reduction='none')(self.critic2(states_action), target_q_values.detach().unsqueeze(1))).mean()
+        #states_action = torch.cat((states, actions), dim=1).to(device)
+        critic1_loss = (weights * nn.MSELoss(reduction='none')(self.critic1(action=actions,state=states), target_q_values.detach().unsqueeze(1))).mean()
+        critic2_loss = (weights * nn.MSELoss(reduction='none')(self.critic2(action=actions,state=states), target_q_values.detach().unsqueeze(1))).mean()
         self.critic1_optimizer.zero_grad()
-        critic1_loss.backward()
-        self.critic1_optimizer.step()
         self.critic2_optimizer.zero_grad()
+        critic1_loss.backward()
         critic2_loss.backward()
+        self.critic1_optimizer.step()
         self.critic2_optimizer.step()
+        
         # Update Actor
         states_a_actor = torch.cat((states, self.actor(states)), dim=1)
         actor_loss = -(weights * self.critic1(states_a_actor)).mean()  # Используем первый критик для обновления актера
@@ -119,7 +123,6 @@ class PRB_DDPG_Agent:
         self.replay_buffer.update_priority(indices, new_priorities)
         # Update Target Networks
         self.update_target_networks()
-        
         self.writer.add_scalar('Actor Loss'  , actor_loss.item()  , self.global_step)
         self.writer.add_scalar('Critic1 Loss', critic1_loss.item(), self.global_step)
         self.writer.add_scalar('Critic2 Loss', critic2_loss.item(), self.global_step)
@@ -142,15 +145,10 @@ class PRB_DDPG_Agent:
             done = False
             episode_reward = 0
             env.set_number(episode)
-            i=0
             
             while not done:
                 action =self.get_action(state) 
                 next_state, reward, done, _ = env.step(action)
-                
-                if i>100:
-                    break
-                i+=1
                 
                 self.replay_buffer.push(state, action, reward, next_state, done)
                 if len(self.replay_buffer) > self.batch_size:
