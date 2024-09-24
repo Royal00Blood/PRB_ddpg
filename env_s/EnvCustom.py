@@ -18,8 +18,7 @@ class CustomEnv(gym.Env):
     def reset_env(self):
         self.state = np.zeros(STATE_SIZE) # [position robot_x , position robot_y, 
                                           #  target point X   , target point Y, 
-                                          #  velocity         , angular velocity, 
-                                          #  Quaternions Z    , Quaternions W ]
+                                          # angle]
         self.done = False
         self.__reset_robot()
         self.__x_list, self.__y_list = [], []
@@ -29,7 +28,6 @@ class CustomEnv(gym.Env):
 
     def __reset_robot(self):
         self.__position_robot = np.zeros(2) # The position of the robot [x, y]
-        self.__move           = np.zeros(1) # [velocity, angular velocity]
         self.__robot_quat     = np.zeros(4) # Quaternions [Qx, Qy, Qz, Qw]
         self.__target_point =[random.choice([random.uniform(S_G_TARG, AREA_GENERATION), random.uniform(-AREA_GENERATION,-S_G_TARG)]),
                               random.choice([random.uniform(S_G_TARG, AREA_GENERATION), random.uniform(-AREA_GENERATION,-S_G_TARG)])]
@@ -44,6 +42,7 @@ class CustomEnv(gym.Env):
     def step(self, action):
         # Применяем действие к состоянию и получаем новое состояние
         # action [v, w]
+        action=[ 0.1, action[0]]
         self.state = self.__calculate_state(action)
         # Проверяем, завершен ли эпизод
         goal = self.__check_done()
@@ -67,7 +66,6 @@ class CustomEnv(gym.Env):
     
         return [self.__position_robot[0] , self.__position_robot[1],
                 self.__target_point[0]   , self.__target_point[1]  ,
-                action[0]           , action[1]          ,
                 self.__d_angl_rad]
  
     def __new_reward(self, goal):

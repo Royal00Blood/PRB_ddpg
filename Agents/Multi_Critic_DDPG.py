@@ -123,7 +123,7 @@ class PRB_DDPG_Agent:
         self.writer.add_scalar('Actor Loss'  , actor_loss.item()  , self.global_step)
         self.writer.add_scalar('Critic1 Loss', critic1_loss.item(), self.global_step)
         self.writer.add_scalar('Critic2 Loss', critic2_loss.item(), self.global_step)
-        #self.writer.add_scalar('Average Reward', torch.mean(rewards), self.global_step)
+        self.writer.add_scalar('Average Reward', torch.mean(rewards), self.global_step)
         self.global_step += 1
        
         

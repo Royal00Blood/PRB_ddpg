@@ -4,17 +4,17 @@ BATCH_SIZE  = 160  # 32 to 256
 ALPHA = 0.6
 
 # Гиперпараметры
-GAMMA = 0.995   # 0.9 to 0.999
-TAU   = 0.01  # 0.001 to 0.01
+GAMMA = 0.9   # 0.9 to 0.999
+TAU   = 0.005 # 0.001 to 0.01
 
-LR_ACTOR  = 0.0006 # 0.0001 to 0.001
-LR_CRITIC = 0.004 # 0.001 to 0.01
+LR_ACTOR  = 0.0007 # 0.0001 to 0.001
+LR_CRITIC = 0.01 # 0.001 to 0.01
 
 WEIGHT_DEC = 0.001 # 
 REWARD = 500
 # Параметры среды
-STATE_SIZE  = 7
-ACTION_SIZE = 2
+STATE_SIZE  = 5
+ACTION_SIZE = 1
 
 ACTION_ = 0.5
 STATE_  = 10.0
