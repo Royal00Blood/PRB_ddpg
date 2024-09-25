@@ -26,10 +26,9 @@ class Actor_1(nn.Module):
         self.action_max = action_max
         
         self.layer_1 = nn.Linear(state_size, layers[0])
-        # self.batch_norm_1 = nn.LayerNorm(layers[0])
         self.layer_2 = nn.Linear(layers[0],layers[1])
-        # self.batch_norm_2 = nn.LayerNorm(layers[1])
-        self.layer_3 = nn.Linear(layers[1],action_size)
+        self.layer_3 = nn.Linear(layers[1],layers[2])
+        self.layer_4 = nn.Linear(layers[2],action_size)
         
         self.reset_weights()
     
@@ -38,17 +37,16 @@ class Actor_1(nn.Module):
         nn.init.constant_(self.layer_1.bias, 0.1)
         nn.init.kaiming_normal_(self.layer_2.weight, mode='fan_in',nonlinearity='relu')
         nn.init.constant_(self.layer_2.bias, 0.1)
-        self.layer_3.weight.data.uniform_(-0.1, 0.1)
+        nn.init.kaiming_normal_(self.layer_3.weight, mode='fan_in',nonlinearity='relu')
+        nn.init.constant_(self.layer_3.bias, 0.1)
+        self.layer_4.weight.data.uniform_(-0.1, 0.1)
         
     def forward(self, state):
         x = F.relu(self.layer_1(state))
-        # x = self.batch_norm_1(x)
         x = F.relu(self.layer_2(x))
-        # x = self.batch_norm_2(x)
-        # x = self.dropout(x)
-        # x = F.relu(x)
-        action = F.tanh(self.layer_3(x))
-        return (action * ACTION_)
+        x = F.relu(self.layer_3(x))
+        action = F.tanh(self.layer_4(x))
+        return (action)
 
 
 class Actor2(nn.Module):
@@ -62,7 +60,7 @@ class Actor2(nn.Module):
         # Общие слои
         self.layer_1 = nn.Linear(state_dim, layer_sizes[0])
         self.layer_2 = nn.Linear(layer_sizes[0], layer_sizes[1])
-        
+       
         # Отдельные слои для каждого действия
         self.action_layers = nn.ModuleList([
             nn.Linear(layer_sizes[1], action_dim) for action_dim in action_dims
