@@ -39,10 +39,17 @@ class PrioritizedReplayBuffer:
         return transitions, indices, weights
         
     def update_priority(self, index, priority):
-        #if 0 <= index < self.capacity:
-        # self.priorities[index] = priority
-        for i, p in zip(index, priority):
-            self.priorities[i] = p
+        if isinstance(index, (list, np.ndarray)):
+            # Если index - список или numpy-массив
+            valid_indices = (0 <= index) & (index < self.capacity)
+            if valid_indices.all():
+                self.priorities[index] = priority
+        else:
+            # Если index - единичное значение
+            if 0 <= index < self.capacity:
+                self.priorities[index] = priority
+
+        
 
     def __len__(self):
         return len(self.buffer)
