@@ -8,7 +8,7 @@ import os
 from settings import (STATE_SIZE, ACTION_SIZE, LR_ACTOR,
                       LR_CRITIC,BATCH_SIZE,GAMMA,BUFFER_SIZE,
                       ALPHA,TAU,EPISODES,EP_STEPS,TEST_EP_STEPS,
-                      TEST_EPISODES, ACTION_,WEIGHT_DEC)
+                      TEST_EPISODES, ACTION_, WEIGHT_DEC)
 from torch.utils.tensorboard import SummaryWriter
 #from torchrl.data import PrioritizedReplayBuffer
 from buffers.PrioritizedReplayBuffer import PrioritizedReplayBuffer
@@ -18,32 +18,20 @@ from noise import Noise
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class PRB_DDPG_Agent:
-    def __init__(self, 
-                 state_size=STATE_SIZE, 
-                 action_size=ACTION_SIZE,
-                 lr_actor=LR_ACTOR, 
-                 lr_critic=LR_CRITIC, 
-                 gamma=GAMMA,
-                 tau=TAU, 
-                 buffer_size=BUFFER_SIZE, 
-                 batch_size=BATCH_SIZE, 
-                 alpha=ALPHA,
-                 weight_decay = WEIGHT_DEC
-                 ):
-        self.state_size = state_size
-        self.action_size = action_size
-        self.lr_actor = lr_actor
-        self.lr_critic = lr_critic
-        self.gamma = gamma
-        self.tau = tau
-        self.buffer_size = buffer_size
-        self.batch_size = batch_size
-        self.action_max = ACTION_
+    def __init__(self, state_size=STATE_SIZE, action_size=ACTION_SIZE, lr_actor=LR_ACTOR, lr_critic=LR_CRITIC, 
+                 gamma=GAMMA, tau=TAU, buffer_size=BUFFER_SIZE, batch_size=BATCH_SIZE, alpha=ALPHA,
+                 weight_decay = WEIGHT_DEC, action_max=ACTION_):
+        self.state_size = state_size, self.action_size = action_size,
+        self.lr_actor = lr_actor , self.lr_critic = lr_critic,
+        self.gamma = gamma, self.tau = tau,
+        self.buffer_size = buffer_size, self.batch_size = batch_size,
+        self.action_max = action_max 
+        self.weight_decay = weight_decay,
         self.replay_buffer = PrioritizedReplayBuffer(buffer_size, alpha)
-        self.writer = SummaryWriter(comment=f"lr_actor={lr_actor}, lr_critic={lr_critic}, gamma={gamma}, tau={tau}, buffer_size={buffer_size}, batch_size={batch_size}")
+        comment = f"lr_actor={lr_actor}, lr_critic={lr_critic}, gamma={gamma}, tau={tau}, buffer_size={buffer_size}, batch_size={batch_size}"
+        self.writer = SummaryWriter(comment=comment)
         self.global_step = 0
         self.noise = Noise(self.action_size)
-        self.weight_decay = weight_decay
         
         self.actor = torch.compile(Actor_1(state_size, action_size)).to(device)
         self.critic1 = torch.compile(Critic3(state_size+action_size)).to(device)
@@ -69,39 +57,33 @@ class PRB_DDPG_Agent:
             
     def update_target_networks(self):
         """Update the target networks."""
-        self.soft_update(self.actor, self.actor_target, self.tau)
+        self.soft_update(self.actor  , self.actor_target  , self.tau)
         self.soft_update(self.critic1, self.critic1_target, self.tau)
         self.soft_update(self.critic2, self.critic2_target, self.tau)
     
     def update(self):
+        
         transitions, indices, weights = self.replay_buffer.sample(self.batch_size)
         if transitions is None:
             return
-        states, actions, rewards, next_states, dones = zip(*transitions)
-        states = torch.tensor(np.array(states), dtype=torch.float32)
-        actions = torch.tensor(np.array(actions), dtype=torch.float32)
-        next_states = torch.tensor(np.array(next_states), dtype=torch.float32)
-        rewards = torch.tensor(np.array(rewards), dtype=torch.float32)
-        dones = torch.tensor(np.array(dones), dtype=torch.float32)
-        weights = torch.tensor(np.array(weights), dtype=torch.float32)
         
-        states = states.to(device)
-        actions = actions.to(device)
-        next_states = next_states.to(device)
-        rewards = rewards.to(device)
-        dones = dones.to(device)
-        weights = weights.to(device)
-
+        states, actions, rewards, next_states, dones = zip(*transitions)
+        
+        states = torch.tensor(np.array(states), dtype=torch.float32).to(device)
+        actions = torch.tensor(np.array(actions), dtype=torch.float32).to(device)
+        next_states = torch.tensor(np.array(next_states), dtype=torch.float32).to(device)
+        rewards = torch.tensor(np.array(rewards), dtype=torch.float32).to(device)
+        dones = torch.tensor(np.array(dones), dtype=torch.float32).to(device)
+        weights = torch.tensor(np.array(weights), dtype=torch.float32).to(device)
+        target_q_values=[]
         # Update Critic
         next_states_action = torch.cat((next_states, self.actor_target(next_states)),dim=1)
-        action = self.actor_target(next_states)
         next_q_values1 = self.critic1_target(next_states_action)
         next_q_values2 = self.critic2_target(next_states_action)
-        target_q_values=[]
         for i in range(len(rewards)):
             target_q_values.append(rewards[i] + self.gamma * (1 - dones[i]) * torch.min(next_q_values1, next_q_values2)[i])  # Усреднение ошибок
         target_q_values = torch.tensor(target_q_values).to(device)
-        ###
+        # Calcualte error learn
         states_action = torch.cat((states, actions), dim=1).to(device)
         critic1_loss = (weights * nn.MSELoss(reduction='none')(self.critic1(states_action), target_q_values.detach().unsqueeze(1))).mean()
         critic2_loss = (weights * nn.MSELoss(reduction='none')(self.critic2(states_action), target_q_values.detach().unsqueeze(1))).mean()
@@ -111,7 +93,6 @@ class PRB_DDPG_Agent:
         critic2_loss.backward()
         self.critic1_optimizer.step()
         self.critic2_optimizer.step()
-        
         # Update Actor
         states_a_actor = torch.cat((states, self.actor(states)), dim=1)
         actor_loss = -(weights * self.critic1(states_a_actor)).mean()  # Используем первый критик для обновления актера
@@ -129,7 +110,6 @@ class PRB_DDPG_Agent:
         self.writer.add_scalar('Average Reward', torch.mean(rewards), self.global_step)
         self.global_step += 1
        
-        
     def train(self, env, num_episodes=EPISODES, ep_steps=EP_STEPS):
         # Загрузка весов и моделей для продолжения обучения
         if os.path.exists('actor_weights.pth') and os.path.exists('critic_weights.pth'):
