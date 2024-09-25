@@ -1,4 +1,8 @@
-/images/*
-/runs/*
-/__pycache__
-*.pth
+# Compiled output
+/runs
+/images
+**/__pycache__
+__init__.py
+
+# Editor files
+.vscode/

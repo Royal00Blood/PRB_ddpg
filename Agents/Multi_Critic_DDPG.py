@@ -20,12 +20,16 @@ class PRB_DDPG_Agent:
     def __init__(self, state_size=STATE_SIZE, action_size=ACTION_SIZE, lr_actor=LR_ACTOR, lr_critic=LR_CRITIC, 
                  gamma=GAMMA, tau=TAU, buffer_size=BUFFER_SIZE, batch_size=BATCH_SIZE, alpha=ALPHA,
                  weight_decay = WEIGHT_DEC, action_max=ACTION_):
-        self.state_size = state_size, self.action_size = action_size,
-        self.lr_actor = lr_actor , self.lr_critic = lr_critic,
-        self.gamma = gamma, self.tau = tau,
-        self.buffer_size = buffer_size, self.batch_size = batch_size,
+        self.state_size = state_size
+        self.action_size = action_size
+        self.lr_actor = lr_actor
+        self.lr_critic = lr_critic
+        self.gamma = gamma
+        self.tau = tau
+        self.buffer_size = buffer_size
+        self.batch_size = batch_size
         self.action_max = action_max 
-        self.weight_decay = weight_decay,
+        self.weight_decay = weight_decay
         self.replay_buffer = PrioritizedReplayBuffer(buffer_size, alpha)
         comment = f"lr_actor={lr_actor}, lr_critic={lr_critic}, gamma={gamma}, tau={tau}, buffer_size={buffer_size}, batch_size={batch_size}"
         self.writer = SummaryWriter(comment=comment)
