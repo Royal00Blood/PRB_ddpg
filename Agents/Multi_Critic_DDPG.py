@@ -10,7 +10,6 @@ from settings import (STATE_SIZE, ACTION_SIZE, LR_ACTOR,
                       ALPHA,TAU,EPISODES,EP_STEPS,TEST_EP_STEPS,
                       TEST_EPISODES, ACTION_, WEIGHT_DEC)
 from torch.utils.tensorboard import SummaryWriter
-#from torchrl.data import PrioritizedReplayBuffer
 from buffers.PrioritizedReplayBuffer import PrioritizedReplayBuffer
 import time
 import torch.nn.functional as F

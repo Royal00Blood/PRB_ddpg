@@ -37,11 +37,16 @@ class PrioritizedReplayBuffer:
         weights = (total * probabilities[indices]) ** (-0.5)
         weights /= weights.max()
         return transitions, indices, weights
-
+        
     def update_priority(self, index, priority):
         #if 0 <= index < self.capacity:
-        self.priorities[index] = priority
+        # self.priorities[index] = priority
+        for i, p in zip(index, priority):
+            self.priorities[i] = p
 
     def __len__(self):
         return len(self.buffer)
+    
+    def __getitem__(self, idx):
+        return self.memory[idx]
 
