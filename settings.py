@@ -1,17 +1,17 @@
 # Буфер-параметры
-BUFFER_SIZE = 1_000_000 #от 10000 до 1000000
-BATCH_SIZE  = 160  # 32 to 256
+BUFFER_SIZE = 1000000 #от 10000 до 1000000
+BATCH_SIZE  = 80 # 32 to 256
 ALPHA = 0.6
 
 # Гиперпараметры
-GAMMA = 0.95   # 0.95 to 0.999
+GAMMA = 0.99   # 0.95 to 0.999
 TAU   = 0.005 # 0.001 to 0.01
 
 LR_ACTOR  = 0.0007 # 0.0001 to 0.001
 LR_CRITIC = 0.007 # 0.001 to 0.01
 
-WEIGHT_DEC = 0.001 # 
-REWARD = 500
+WEIGHT_DEC = 0.0007 # 
+REWARD = 1000
 # Параметры среды
 STATE_SIZE  = 5
 ACTION_SIZE = 1
@@ -28,7 +28,7 @@ AREA_GENERATION = AREA_DEFEAT - 0.2
 TIME = 0.1
 
 # Параметры обучения
-EPISODES = 500
+EPISODES = 1000
 EP_STEPS = 500
 
 #  Параметры проверки
@@ -40,8 +40,8 @@ SEED = 200
 
 # Кол нейронов в слоях
          #[ly1, ly2, ly3(v/w), ly4(v/w), ly5(v/w)] 
-LAYER_A1 = [300, 150, 200]
+LAYER_A1 = [500, 200, 200]
 LAYER_A2 = [400, 250, 300]
-LAYER_C1 = [250, 200]
+LAYER_C1 = [350, 200]
 LAYER_C2 = [300, 150]
 
