@@ -3,6 +3,6 @@
 /images
 **/__pycache__
 __init__.py
-
+__pycache__/*
 # Editor files
 .vscode/
