@@ -15,6 +15,7 @@ import time
 import torch.nn.functional as F
 from noise import Noise
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+path = "C:\Users\Ivan\Documents\python_github\PRB_ddpg\Agents\models_save"
 
 class PRB_DDPG_Agent:
     def __init__(self, state_size=STATE_SIZE, action_size=ACTION_SIZE, lr_actor=LR_ACTOR, lr_critic=LR_CRITIC, 
@@ -78,7 +79,9 @@ class PRB_DDPG_Agent:
         rewards = torch.tensor(np.array(rewards), dtype=torch.float32).to(device)
         dones = torch.tensor(np.array(dones), dtype=torch.float32).to(device)
         weights = torch.tensor(np.array(weights), dtype=torch.float32).to(device)
+        
         target_q_values=[]
+        
         # Update Critic
         next_states_action = torch.cat((next_states, self.actor_target(next_states)),dim=1)
         next_q_values1 = self.critic1_target(next_states_action)
@@ -86,6 +89,7 @@ class PRB_DDPG_Agent:
         for i in range(len(rewards)):
             target_q_values.append(rewards[i] + self.gamma * (1 - dones[i]) * torch.min(next_q_values1, next_q_values2)[i])  # Усреднение ошибок
         target_q_values = torch.tensor(target_q_values).to(device)
+        
         # Calcualte error learn
         states_action = torch.cat((states, actions), dim=1).to(device)
         critic1_loss = (weights * nn.MSELoss(reduction='none')(self.critic1(states_action), target_q_values.detach().unsqueeze(1))).mean()
@@ -96,15 +100,18 @@ class PRB_DDPG_Agent:
         critic2_loss.backward()
         self.critic1_optimizer.step()
         self.critic2_optimizer.step()
+        
         # Update Actor
         states_a_actor = torch.cat((states, self.actor(states)), dim=1)
         actor_loss = -(weights * self.critic1(states_a_actor)).mean()  # Используем первый критик для обновления актера
         self.actor_optimizer.zero_grad()
         actor_loss.backward()
         self.actor_optimizer.step()
+        
         # Update Priorities
         new_priorities = (critic1_loss.detach().cpu().numpy() + critic2_loss.detach().cpu().numpy() + 1e-5) / 2
         self.replay_buffer.update_priority(indices, new_priorities)
+        
         # Update Target Networks
         self.update_target_networks()
         self.writer.add_scalar('Actor Loss'  , actor_loss.item()  , self.global_step)
@@ -145,11 +152,17 @@ class PRB_DDPG_Agent:
             print(f"Episode {episode+1}/{num_episodes}, Reward: {episode_reward:.2f}, Avg Reward: {avg_reward:.2f}")
 
             if episode % 5 == 0:
+                # Save model
+                
+               
                 torch.save(self.actor.state_dict()  , 'actor_weights.pth')
                 torch.save(self.critic1.state_dict(), 'critic1_weights.pth')
                 torch.save(self.critic2.state_dict(), 'critic2_weights.pth')
             
-        # Сохранение весов и моделей
+        # Сохранение весов и моделей 
+        torch.save(self.actor, path)
+        torch.save(self.critic1, path)
+        torch.save(self.critic2, path)
         torch.save(self.actor.state_dict()  ,'actor_weights.pth')
         torch.save(self.critic1.state_dict(),  'critic1_weights.pth')
         torch.save(self.critic2.state_dict(),  'critic2_weights.pth')
@@ -170,6 +183,8 @@ class PRB_DDPG_Agent:
             max_steps (int): максимальное количество шагов в одном эпизоде
         """
         # Загрузка весов и моделей
+        model = torch.load(path, weights_only=False)
+        model.eval()
         
         self.actor.load_state_dict(torch.load( 'actor_weights.pth'))
         self.critic1.load_state_dict(torch.load('critic1_weights.pth'))
