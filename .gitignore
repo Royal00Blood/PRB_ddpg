@@ -4,7 +4,7 @@
 **/__pycache__
 __init__.py
 __pycache__/*
-/weights
+*.pth
 
 # Editor files
 .vscode/

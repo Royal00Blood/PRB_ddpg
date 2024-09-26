@@ -155,8 +155,6 @@ class PRB_DDPG_Agent:
 
             if episode % 5 == 0:
                 # Save model
-                
-               
                 torch.save(self.actor.state_dict()  , 'actor_weights.pth')
                 torch.save(self.critic1.state_dict(), 'critic1_weights.pth')
                 torch.save(self.critic2.state_dict(), 'critic2_weights.pth')
