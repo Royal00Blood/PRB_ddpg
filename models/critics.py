@@ -33,9 +33,9 @@ class Critic(nn.Module):
 
 class Critic3(nn.Module):
     def __init__(self, 
-                 input=STATE_SIZE + ACTION_SIZE,
+                 input=S_SIZE + A_SIZE,
                  seed=SEED,
-                 layers=LAYER_C1):
+                 layers=[0,0]):
         super(Critic3, self).__init__()
         self.seed = torch.manual_seed(seed)
         
@@ -60,9 +60,9 @@ class Critic3(nn.Module):
     
 class Critic4(nn.Module):
     def __init__(self, 
-                    input=STATE_SIZE + ACTION_SIZE,
+                    input=S_SIZE + A_SIZE,
                     seed=SEED,
-                    layers=LAYER_C2):
+                    layers=[0,0]):
         super(Critic4, self).__init__()
         self.seed = torch.manual_seed(seed)
         
