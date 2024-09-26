@@ -14,7 +14,7 @@ WEIGHT_DEC = 0.001 # 0.0001 0.01
 REWARD = 500
 # Параметры среды
 S_SIZE  = 5
-A_SIZE = 1
+A_SIZE = 2
 
 A_MAX = 0.5
 S_MAX  = 10.0
@@ -39,7 +39,7 @@ TEST_EP_STEPS = 200
 SEED = 200
 
 # Кол нейронов в слоях
-         #[ly1, ly2, ly3(v/w), ly4(v/w), ly5(v/w)] 
+    #[ly1, ly2, ly3(v/w), ly4(v/w), ly5(v/w)] 
 L_A  = [400, 300, 200, 100]
 L_C1 = [300, 150, 100]
 L_C2 = [150, 150, 100]
