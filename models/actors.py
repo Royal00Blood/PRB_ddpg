@@ -20,9 +20,13 @@ class Actor(nn.Module):
         self.action_max = action_max
         # init layers
         self.layer_1 = nn.Linear(state_size, layers[0])
+        self.batch_norm_1 = nn.BatchNorm1d(layers[0])
         self.layer_2 = nn.Linear(layers[0],layers[1])
+        self.batch_norm_2 = nn.BatchNorm1d(layers[1])
         self.layer_3 = nn.Linear(layers[1],layers[2])
+        self.batch_norm_3 = nn.BatchNorm1d(layers[2])
         self.layer_4 = nn.Linear(layers[2],layers[3])
+        self.batch_norm_4 = nn.BatchNorm1d(layers[3])
         self.layer_5 = nn.Linear(layers[3],action_size)
         # init weights
         self.reset_weights()
@@ -40,8 +44,12 @@ class Actor(nn.Module):
         
     def forward(self, state):
         x = F.relu(self.layer_1(state))
+        x = self.batch_norm_1(x)
         x = F.relu(self.layer_2(x))
+        x = self.batch_norm_2(x)
         x = F.relu(self.layer_3(x))
+        x = self.batch_norm_3(x)
         x = F.relu(self.layer_4(x))
+        x = self.batch_norm_4(x)
         action = F.tanh(self.layer_5(x))
-        return action
+        return action * self.action_max

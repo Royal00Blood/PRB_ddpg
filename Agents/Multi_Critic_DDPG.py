@@ -55,7 +55,7 @@ class PRB_DDPG_Agent:
         
     def get_action(self,state):
         state = torch.tensor(state, dtype=torch.float32).to(device)
-        action = self.actor(state).detach().cpu().numpy()* self.action_max + self.noise.sample()
+        action = self.actor(state).detach().cpu().numpy() + self.noise.sample()
         return np.clip(a=action,a_min = -self.action_max, a_max = self.action_max)
     
     def soft_update(self, source, target, tau):

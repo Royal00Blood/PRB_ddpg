@@ -12,8 +12,11 @@ class Critic(nn.Module):
         self.seed = torch.manual_seed(seed)
         
         self.layer_s0 = nn.Linear(state_size, layers[0])
+        self.batch_norm_s0 = nn.BatchNorm1d(layers[0])
         self.layer_s1 = nn.Linear(layers[0], layers[1])
+        self.batch_norm_s1 = nn.BatchNorm1d(layers[1])
         self.layer_a  = nn.Linear(action_size, layers[1])
+        self.batch_norm_a = nn.BatchNorm1d(layers[1])
         self.output = nn.Linear(layers[1], 1)
         self.reset_parameters()
         
@@ -27,8 +30,11 @@ class Critic(nn.Module):
         
     def forward(self, state, action ):
         s = F.relu(self.layer_s0(state))
-        s = F.relu(self.layer_s1(s)) 
+        s = self.batch_norm_s0(s)
+        s = F.relu(self.layer_s1(s))
+        s = self.batch_norm_s1(s) 
         a = F.relu(self.layer_a(action))
+        a = self.batch_norm_a(a)
         q_val = self.output(torch.relu(s+a))
         return q_val     
 
