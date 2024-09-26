@@ -4,9 +4,7 @@
 **/__pycache__
 __init__.py
 __pycache__/*
-actor_weights.pth
-critic1_weights.pth
-critic2_weights.pth
+/weights
 
 # Editor files
 .vscode/
