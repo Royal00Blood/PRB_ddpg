@@ -8,57 +8,34 @@ from settings import (STATE_SIZE, SEED,
 import numpy as np
 torch._dynamo.config.suppress_errors = False
 
-class Critic1(nn.Module):
+class Critic(nn.Module):
     def __init__(self, 
                  state_size=STATE_SIZE,
                  action_size=ACTION_SIZE,
                  seed=SEED,
                  layers=LAYER_C1):
-        super(Critic1, self).__init__()
+        super(Critic, self).__init__()
         self.seed = torch.manual_seed(seed)
         
-        self.layer_1 = nn.Linear(action_size, layers[0])
-        self.layer_2 = nn.Linear(state_size, layers[0])
-        self.layer_3 = nn.Linear(layers[0], 1)
+        self.layer_s0 = nn.Linear(state_size, layers[0])
+        self.layer_s1 = nn.Linear(layers[0], layers[1])
+        self.layer_a  = nn.Linear(action_size, layers[1])
         self.reset_parameters()
         
     def reset_parameters(self):
-        nn.init.normal_(self.layer_1.weight, 0., 0.1)
-        nn.init.constant_(self.layer_1.bias, 0.1)
-        nn.init.normal_(self.layer_2.weight, 0., 0.1)
-        nn.init.constant_(self.layer_2.bias, 0.1)
+        nn.init.normal_(self.layer_s0.weight, 0., 0.1)
+        nn.init.constant_(self.layer_s0.bias, 0.1)
+        nn.init.normal_(self.layer_s1.weight, 0., 0.1)
+        nn.init.constant_(self.layer_s1.bias, 0.1)
+        nn.init.normal_(self.layer_a.weight, 0., 0.1)
+        nn.init.constant_(self.layer_a.bias, 0.1)
         
-    def forward(self, action, state):
-        s = F.relu(self.layer_1(action))
-        a = F.relu(self.layer_2(state))
+    def forward(self, state, action ):
+        s = F.relu(self.layer_s0(state))
+        s = F.relu(self.layer_s1(s)) 
+        a = F.relu(self.layer_a(action))
         q_val = self.output(torch.relu(s+a))
-        return q_val  
-
-class Critic2(nn.Module):
-    def __init__(self, 
-                 state_size=STATE_SIZE,
-                 action_size=ACTION_SIZE,
-                 seed=SEED,
-                 layers=LAYER_C1):
-        super(Critic2, self).__init__()
-        self.seed = torch.manual_seed(seed)
-        
-        self.layer_1 = nn.Linear(action_size, layers[0])
-        self.layer_2 = nn.Linear(state_size, layers[0])
-        self.layer_3 = nn.Linear(layers[0], 1)
-        self.reset_parameters()
-        
-    def reset_parameters(self):
-        nn.init.normal_(self.layer_1.weight, 0., 0.1)
-        nn.init.constant_(self.layer_1.bias, 0.1)
-        nn.init.normal_(self.layer_2.weight, 0., 0.1)
-        nn.init.constant_(self.layer_2.bias, 0.1)
-        
-    def forward(self, action, state):
-        s = F.relu(self.layer_1(action))
-        a = F.relu(self.layer_2(state))
-        q_val = self.output(torch.relu(s+a))
-        return q_val   
+        return q_val     
 
 class Critic3(nn.Module):
     def __init__(self, 

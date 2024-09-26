@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch._dynamo
 import torch.nn.functional as F
-from settings import (A_MAX, S_SIZE, A_SIZE, SEED, L_A1)
+from settings import (A_MAX, S_SIZE, A_SIZE, SEED, L_A)
 torch._dynamo.config.suppress_errors = False
     
 class Actor_1(nn.Module):
@@ -13,7 +13,7 @@ class Actor_1(nn.Module):
         action_max  - максимальное значение действия по модулю
         layers      - вектор со значениями количества нейронов в каждом слое
     """
-    def __init__(self, state_size=S_SIZE, action_size=A_SIZE, seed=SEED, action_max = A_MAX, layers=L_A1):
+    def __init__(self, state_size=S_SIZE, action_size=A_SIZE, seed=SEED, action_max = A_MAX, layers=L_A):
         super(Actor_1, self).__init__()
         
         self.seed = torch.manual_seed(seed)
