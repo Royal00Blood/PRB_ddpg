@@ -14,6 +14,7 @@ class Critic(nn.Module):
         self.layer_s0 = nn.Linear(state_size, layers[0])
         self.layer_s1 = nn.Linear(layers[0], layers[1])
         self.layer_a  = nn.Linear(action_size, layers[1])
+        self.output = nn.Linear(layers[1], 1)
         self.reset_parameters()
         
     def reset_parameters(self):

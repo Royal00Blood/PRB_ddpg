@@ -16,7 +16,7 @@ import time
 import torch.nn.functional as F
 from noise import Noise
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-path = "C:\Users\Ivan\Documents\python_github\PRB_ddpg\Agents\models_save"
+# path = "C:\Users\Ivan\Documents\python_github\PRB_ddpg\Agents\models_save"
 
 class PRB_DDPG_Agent:
     def __init__(self, state_size=S_SIZE, action_size=A_SIZE, lr_actor=LR_A, lr_critic=LR_C, 
@@ -162,9 +162,6 @@ class PRB_DDPG_Agent:
                 torch.save(self.critic2.state_dict(), 'critic2_weights.pth')
             
         # Сохранение весов и моделей 
-        torch.save(self.actor, path)
-        torch.save(self.critic1, path)
-        torch.save(self.critic2, path)
         torch.save(self.actor.state_dict()  ,'actor_weights.pth')
         torch.save(self.critic1.state_dict(),  'critic1_weights.pth')
         torch.save(self.critic2.state_dict(),  'critic2_weights.pth')
@@ -184,9 +181,6 @@ class PRB_DDPG_Agent:
             max_episodes (int): максимальное количество эпизодов для тестирования
             max_steps (int): максимальное количество шагов в одном эпизоде
         """
-        # Загрузка весов и моделей
-        model = torch.load(path, weights_only=False)
-        model.eval()
         
         self.actor.load_state_dict(torch.load( 'actor_weights.pth'))
         self.critic1.load_state_dict(torch.load('critic1_weights.pth'))

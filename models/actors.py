@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from settings import (A_MAX, S_SIZE, A_SIZE, SEED, L_A)
 torch._dynamo.config.suppress_errors = False
     
-class Actor_1(nn.Module):
+class Actor(nn.Module):
     """ Арихитектура модели Актера для сети DDPG принимает на вход:
         state_size  - размерность вектора состояния 
         action_size - размерность вектора действия
@@ -14,7 +14,7 @@ class Actor_1(nn.Module):
         layers      - вектор со значениями количества нейронов в каждом слое
     """
     def __init__(self, state_size=S_SIZE, action_size=A_SIZE, seed=SEED, action_max = A_MAX, layers=L_A):
-        super(Actor_1, self).__init__()
+        super(Actor, self).__init__()
         
         self.seed = torch.manual_seed(seed)
         self.action_max = action_max
