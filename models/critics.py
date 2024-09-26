@@ -2,18 +2,12 @@ import torch
 import torch.nn as nn
 import torch._dynamo
 import torch.nn.functional as F
-from settings import (STATE_SIZE, SEED,
-                      ACTION_SIZE, LAYER_C1,
-                      LAYER_C2)
+from settings import (S_SIZE, SEED, A_SIZE)
 import numpy as np
 torch._dynamo.config.suppress_errors = False
 
 class Critic(nn.Module):
-    def __init__(self, 
-                 state_size=STATE_SIZE,
-                 action_size=ACTION_SIZE,
-                 seed=SEED,
-                 layers=LAYER_C1):
+    def __init__(self, state_size=S_SIZE, action_size=A_SIZE, seed=SEED,layers=[100, 50]):
         super(Critic, self).__init__()
         self.seed = torch.manual_seed(seed)
         
