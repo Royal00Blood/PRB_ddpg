@@ -2,13 +2,14 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import numpy as np
-from models.actors import Actor_1, Actor2
-from models.critics import Critic1, Critic2, Critic3, Critic4
+from models.actors import Actor
+from models.critics import Critic
 import os
-from settings import (STATE_SIZE, ACTION_SIZE, LR_ACTOR,
-                      LR_CRITIC,BATCH_SIZE,GAMMA,BUFFER_SIZE,
-                      ALPHA,TAU,EPISODES,EP_STEPS,TEST_EP_STEPS,
-                      TEST_EPISODES, ACTION_, WEIGHT_DEC)
+from settings import (S_SIZE, A_SIZE, LR_A, LR_C, L_C1, L_C2,
+                      BATCH_SIZE,GAMMA,BUFFER_SIZE,
+                      ALPHA, TAU, EPISODES,
+                      EP_STEPS, TEST_EP_STEPS,
+                      TEST_EPISODES, A_MAX, WEIGHT_DEC)
 from torch.utils.tensorboard import SummaryWriter
 from buffers.PrioritizedReplayBuffer import PrioritizedReplayBuffer
 import time
@@ -18,9 +19,10 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 path = "C:\Users\Ivan\Documents\python_github\PRB_ddpg\Agents\models_save"
 
 class PRB_DDPG_Agent:
-    def __init__(self, state_size=STATE_SIZE, action_size=ACTION_SIZE, lr_actor=LR_ACTOR, lr_critic=LR_CRITIC, 
+    def __init__(self, state_size=S_SIZE, action_size=A_SIZE, lr_actor=LR_A, lr_critic=LR_C, 
                  gamma=GAMMA, tau=TAU, buffer_size=BUFFER_SIZE, batch_size=BATCH_SIZE, alpha=ALPHA,
-                 weight_decay = WEIGHT_DEC, action_max=ACTION_):
+                 weight_decay = WEIGHT_DEC, action_max=A_MAX):
+        
         self.state_size = state_size
         self.action_size = action_size
         self.lr_actor = lr_actor
@@ -36,14 +38,16 @@ class PRB_DDPG_Agent:
         self.writer = SummaryWriter(comment=comment)
         self.global_step = 0
         self.noise = Noise(self.action_size)
+        self.layers_critic_1 = L_C1
+        self.layers_critic_2 = L_C2
         
-        self.actor = torch.compile(Actor_1(state_size, action_size)).to(device)
-        self.critic1 = torch.compile(Critic3(state_size+action_size)).to(device)
-        self.critic2 = torch.compile(Critic4(state_size+action_size)).to(device)
+        self.actor = torch.compile(Actor(self.state_size, self.action_size)).to(device)
+        self.critic1 = torch.compile(Critic(self.state_size, self.action_size,layers=self.layers_critic_1)).to(device)
+        self.critic2 = torch.compile(Critic(self.state_size, self.action_size,layers=self.layers_critic_2)).to(device)
         
-        self.actor_target = torch.compile(Actor_1(state_size, action_size)).to(device)
-        self.critic1_target = torch.compile(Critic3(state_size+action_size)).to(device)
-        self.critic2_target = torch.compile(Critic4(state_size+action_size)).to(device)
+        self.actor_target = torch.compile(Actor(state_size, action_size)).to(device)
+        self.critic1_target = torch.compile(Critic(self.state_size, self.action_size,layers=self.layers_critic_1)).to(device)
+        self.critic2_target = torch.compile(Critic(self.state_size, self.action_size,layers=self.layers_critic_2)).to(device)
         
         self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=self.lr_actor, weight_decay=self.weight_decay)
         self.critic1_optimizer = optim.Adam(self.critic1.parameters(), lr=self.lr_critic, weight_decay=self.weight_decay)
@@ -51,8 +55,8 @@ class PRB_DDPG_Agent:
         
     def get_action(self,state):
         state = torch.tensor(state, dtype=torch.float32).to(device)
-        action = self.actor(state).detach().cpu().numpy() + self.noise.sample()
-        return action
+        action = self.actor(state).detach().cpu().numpy()* self.action_max + self.noise.sample()
+        return np.clip(a=action,a_min = -self.action_max, a_max = self.action_max)
     
     def soft_update(self, source, target, tau):
         """Softly update target network parameters."""
@@ -84,16 +88,15 @@ class PRB_DDPG_Agent:
         
         # Update Critic
         next_states_action = torch.cat((next_states, self.actor_target(next_states)),dim=1)
-        next_q_values1 = self.critic1_target(next_states_action)
-        next_q_values2 = self.critic2_target(next_states_action)
+        next_q_values1 = self.critic1_target(next_states, actions)
+        next_q_values2 = self.critic2_target(next_states, actions)
         for i in range(len(rewards)):
             target_q_values.append(rewards[i] + self.gamma * (1 - dones[i]) * torch.min(next_q_values1, next_q_values2)[i])  # Усреднение ошибок
         target_q_values = torch.tensor(target_q_values).to(device)
         
         # Calcualte error learn
-        states_action = torch.cat((states, actions), dim=1).to(device)
-        critic1_loss = (weights * nn.MSELoss(reduction='none')(self.critic1(states_action), target_q_values.detach().unsqueeze(1))).mean()
-        critic2_loss = (weights * nn.MSELoss(reduction='none')(self.critic2(states_action), target_q_values.detach().unsqueeze(1))).mean()
+        critic1_loss = (weights * nn.MSELoss(reduction='none')(self.critic1(states, actions), target_q_values.detach().unsqueeze(1))).mean()
+        critic2_loss = (weights * nn.MSELoss(reduction='none')(self.critic2(states, actions), target_q_values.detach().unsqueeze(1))).mean()
         self.critic1_optimizer.zero_grad()
         self.critic2_optimizer.zero_grad()
         critic1_loss.backward()
@@ -102,8 +105,7 @@ class PRB_DDPG_Agent:
         self.critic2_optimizer.step()
         
         # Update Actor
-        states_a_actor = torch.cat((states, self.actor(states)), dim=1)
-        actor_loss = -(weights * self.critic1(states_a_actor)).mean()  # Используем первый критик для обновления актера
+        actor_loss = -(weights * self.critic1(states, self.actor(states))).mean()  # Используем первый критик для обновления актера
         self.actor_optimizer.zero_grad()
         actor_loss.backward()
         self.actor_optimizer.step()
