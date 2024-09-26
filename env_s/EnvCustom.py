@@ -1,8 +1,6 @@
 import numpy as np
-from settings import (STATE_SIZE, ACTION_SIZE, 
-                      ACTION_, STATE_, AREA_DEFEAT, 
-                      AREA_WIN, AREA_GENERATION, 
-                      TIME, EP_STEPS,S_G_TARG, REWARD)
+from settings import (S_SIZE, A_SIZE, A_MAX, S_MAX, AREA_DEFEAT, 
+                      AREA_WIN, AREA_GENERATION, TIME, S_G_TARG, REWARD)
 import gym
 import random
 from calculation_scripts.DistanceBW2points import DistanceBW2points as d_dist
@@ -11,12 +9,12 @@ import matplotlib.pyplot as plt
 
 class CustomEnv(gym.Env):
     def __init__(self):
-        self.action_space      = gym.spaces.Box(low=np.array([-ACTION_] * ACTION_SIZE ), high=np.array([ACTION_] * ACTION_SIZE), dtype=np.float32)
-        self.observation_space = gym.spaces.Box(low=np.array([STATE_  ] * STATE_SIZE  ), high=np.array([STATE_ ] * STATE_SIZE ), dtype=np.float32)
+        self.action_space      = gym.spaces.Box(low=np.array([-A_MAX] * A_SIZE ), high=np.array([A_MAX] * A_SIZE), dtype=np.float32)
+        self.observation_space = gym.spaces.Box(low=np.array([-S_MAX] * S_SIZE ), high=np.array([A_MAX] * S_SIZE), dtype=np.float32)
         self.reset_env()
 
     def reset_env(self):
-        self.state = np.zeros(STATE_SIZE) # [position robot_x , position robot_y, 
+        self.state = np.zeros(S_SIZE) # [position robot_x , position robot_y, 
                                           #  target point X   , target point Y, 
                                           # angle]
         self.done = False
