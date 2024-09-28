@@ -116,7 +116,7 @@ class CustomEnv(gym.Env):
                self.__target_point[1] + AREA_WIN > self.__position_robot[1] > self.__target_point[1] - AREA_WIN):
             goal = True
             self.done = True
-           # self.graf_move()
+            self.graf_move()
             print("Target_True")
             return  goal
         else:

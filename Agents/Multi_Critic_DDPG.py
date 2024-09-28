@@ -87,7 +87,6 @@ class PRB_DDPG_Agent:
         target_q_values=[]
         
         # Update Critic
-        next_states_action = torch.cat((next_states, self.actor_target(next_states)),dim=1)
         next_q_values1 = self.critic1_target(next_states, actions)
         next_q_values2 = self.critic2_target(next_states, actions)
         for i in range(len(rewards)):
@@ -105,7 +104,8 @@ class PRB_DDPG_Agent:
         self.critic2_optimizer.step()
         
         # Update Actor
-        actor_loss = -(weights * self.critic1(states, self.actor(states))).mean()  # Используем первый критик для обновления актера
+        actors_1 = self.actor(states)
+        actor_loss = -(weights * self.critic1(states, actors_1)).mean()  # Используем первый критик для обновления актера
         self.actor_optimizer.zero_grad()
         actor_loss.backward()
         self.actor_optimizer.step()
