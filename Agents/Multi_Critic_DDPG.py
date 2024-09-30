@@ -42,12 +42,12 @@ class PRB_DDPG_Agent:
         self.layers_critic_2 = L_C2
         
         self.actor = torch.compile(Actor(self.state_size, self.action_size)).to(device)
-        self.critic1 = torch.compile(Critic(self.state_size, self.action_size,layers=self.layers_critic_1)).to(device)
-        self.critic2 = torch.compile(Critic(self.state_size, self.action_size,layers=self.layers_critic_2)).to(device)
+        self.critic1 = torch.compile(Critic(self.state_size, self.action_size,layers=self.layers_critic_1, name="critic1")).to(device)
+        self.critic2 = torch.compile(Critic(self.state_size, self.action_size,layers=self.layers_critic_2, name="critic2")).to(device)
         
-        self.actor_target = torch.compile(Actor(state_size, action_size)).to(device)
-        self.critic1_target = torch.compile(Critic(self.state_size, self.action_size,layers=self.layers_critic_1)).to(device)
-        self.critic2_target = torch.compile(Critic(self.state_size, self.action_size,layers=self.layers_critic_2)).to(device)
+        self.actor_target = torch.compile(Actor(state_size, action_size,name="actor_target")).to(device)
+        self.critic1_target = torch.compile(Critic(self.state_size, self.action_size,layers=self.layers_critic_1,name="critic1_target")).to(device)
+        self.critic2_target = torch.compile(Critic(self.state_size, self.action_size,layers=self.layers_critic_2,name="critic2_target")).to(device)
         
         self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=self.lr_actor, weight_decay=self.weight_decay)
         self.critic1_optimizer = optim.Adam(self.critic1.parameters(), lr=self.lr_critic, weight_decay=self.weight_decay)
@@ -121,13 +121,30 @@ class PRB_DDPG_Agent:
         self.writer.add_scalar('Critic2 Loss', critic2_loss.item(), self.global_step)
         self.writer.add_scalar('Average Reward', torch.mean(rewards), self.global_step)
         self.global_step += 1
-       
+    
+    def save_models(self):
+        self.actor.save_checkpoint()
+        self.actor_target.save_checkpoint()
+        self.critic1.save_checkpoint()
+        self.critic2.save_checkpoint()
+        self.critic1_target.save_checkpoint()
+        self.critic2_target.save_checkpoint()
+
+    def load_models(self):
+        self.actor.load_checkpoint()
+        self.actor_target.load_checkpoint()
+        self.critic1.load_checkpoint()
+        self.critic2.load_checkpoint()
+        self.critic1_target.load_checkpoint()
+        self.critic1_target.load_checkpoint()
+           
     def train(self, env, num_episodes=EPISODES, ep_steps=EP_STEPS):
         # Загрузка весов и моделей для продолжения обучения
-        if os.path.exists('actor_weights.pth') and os.path.exists('critic_weights.pth'):
-            self.actor.load_state_dict(torch.load('actor_weights.pth'))
-            self.critic1.load_state_dict(torch.load('critic1_weights.pth'))
-            self.critic2.load_state_dict(torch.load('critic2_weights.pth'))
+        if os.path.exists('/chekpoints/actor*') :
+        #     self.actor.load_state_dict(torch.load('actor_weights.pth'))
+        #     self.critic1.load_state_dict(torch.load('critic1_weights.pth'))
+        #     self.critic2.load_state_dict(torch.load('critic2_weights.pth'))
+            self.load_models()
         
         start_time = time.time()
         episode_rewards = []
@@ -155,14 +172,16 @@ class PRB_DDPG_Agent:
 
             if episode % 5 == 0:
                 # Save model
-                torch.save(self.actor.state_dict()  , 'actor_weights.pth')
-                torch.save(self.critic1.state_dict(), 'critic1_weights.pth')
-                torch.save(self.critic2.state_dict(), 'critic2_weights.pth')
+                # torch.save(self.actor.state_dict()  , 'actor_weights.pth')
+                # torch.save(self.critic1.state_dict(), 'critic1_weights.pth')
+                # torch.save(self.critic2.state_dict(), 'critic2_weights.pth')
+                self.save_models()
             
         # Сохранение весов и моделей 
-        torch.save(self.actor.state_dict()  ,'actor_weights.pth')
-        torch.save(self.critic1.state_dict(),  'critic1_weights.pth')
-        torch.save(self.critic2.state_dict(),  'critic2_weights.pth')
+        # torch.save(self.actor.state_dict()  ,'actor_weights.pth')
+        # torch.save(self.critic1.state_dict(),  'critic1_weights.pth')
+        # torch.save(self.critic2.state_dict(),  'critic2_weights.pth')
+        self.save_models()
         
         self.writer.close()
         end_time = time.time()
@@ -180,9 +199,10 @@ class PRB_DDPG_Agent:
             max_steps (int): максимальное количество шагов в одном эпизоде
         """
         
-        self.actor.load_state_dict(torch.load( 'actor_weights.pth'))
-        self.critic1.load_state_dict(torch.load('critic1_weights.pth'))
-        self.critic2.load_state_dict(torch.load( 'critic2_weights.pth'))
+        # self.actor.load_state_dict(torch.load( 'actor_weights.pth'))
+        # self.critic1.load_state_dict(torch.load('critic1_weights.pth'))
+        # self.critic2.load_state_dict(torch.load( 'critic2_weights.pth'))
+        self.load_models()
        
         rewards = []
        

@@ -1,42 +1,41 @@
 import torch
+import os
 import torch.nn as nn
 import torch._dynamo
 import torch.nn.functional as F
-from settings import (S_SIZE, SEED, A_SIZE)
+from settings import (S_SIZE, SEED, A_SIZE, DIR_CHEKPOINT)
 import numpy as np
 torch._dynamo.config.suppress_errors = False
 
 class Critic(nn.Module):
-    def __init__(self, state_size=S_SIZE, action_size=A_SIZE, seed=SEED,layers=[100, 50]):
+    def __init__(self, state_size=S_SIZE, action_size=A_SIZE, seed=SEED,layers=[100, 50], dir_chekpoint= DIR_CHEKPOINT, name = "critic_checpoint"):
         super(Critic, self).__init__()
+        
+        self.chekpoint = os.path.join(dir_chekpoint, name)
         self.seed = torch.manual_seed(seed)
         
-        self.layer_s0 = nn.Linear(state_size, layers[0])
-        self.batch_norm_s0 = nn.LayerNorm(layers[0])
-        
-        self.layer_s1 = nn.Linear(layers[0], layers[1])
-        self.batch_norm_s1 = nn.LayerNorm(layers[1])
-        
-        self.layer_a  = nn.Linear(action_size, layers[1])
-        self.batch_norm_a = nn.LayerNorm(layers[1])
-        
-        self.layer_sa = nn.Linear(layers[1], layers[2])
-        self.batch_norm_sa = nn.LayerNorm(layers[2])
-        
-        self.layer_out=nn.Linear(layers[2],1)
+        self.layer_1 = nn.Linear(state_size+action_size, layers[0])
+        self.batch_norm_1 = nn.LayerNorm(layers[0])
+        self.layer_2 = nn.Linear(layers[0], layers[1])
+        self.batch_norm_2 = nn.LayerNorm(layers[1])
+        self.q = nn.Linear(layers[1], 1)
         self.reset_parameters()
         
     def reset_parameters(self):
-        for layer in [self.layer_s0, self.layer_s1, self.layer_a, self.layer_sa ]:
+        for layer in [self.layer_1, self.layer_2]:
             nn.init.kaiming_normal_(layer.weight, mode='fan_out', nonlinearity='relu')
             nn.init.constant_(layer.bias, 0.1)
         
     def forward(self, state, action ):
-        s0 = F.relu(self.batch_norm_s0(self.layer_s0(state)))
-        s = F.relu(self.batch_norm_s1(self.layer_s1(s0)))
-        a = F.relu(self.batch_norm_a(self.layer_a(action)))
-        sa = F.relu(self.batch_norm_sa(self.layer_sa(torch.add(s,a))))
-        q_val = self.layer_out(F.leaky_relu(sa))
-        return q_val     
+        layer_1 = F.relu(self.batch_norm_1(self.layer_1(torch.cat([state, action], dim=1))))
+        layer_2 = F.relu(self.batch_norm_2(self.layer_2(layer_1)))
+        q_val = self.q(layer_2)
+        return q_val 
+    
+    def save_checkpoint(self):
+        torch.save(self.state_dict(), self.chekpoint)
+
+    def load_checkpoint(self):
+        self.load_state_dict(torch.load(self.chekpointe))    
 
 
