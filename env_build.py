@@ -30,12 +30,12 @@ ANGL_RANGE = 3.14
                                                    
 
 class Robot(EnvBase):
-    # metadata = {
-    #     "render_modes": ["human", "rgb_array"],
-    #     "render_fps": 30,
-    # }
+    metadata = {
+        "render_modes": ["human", "rgb_array"],
+        "render_fps": 30,
+    }
     batch_locked = False
-
+    
     def __init__(self, td_params=None, seed=None, device="cpu"):
         if td_params is None:
             td_params = self.gen_params()
@@ -46,15 +46,8 @@ class Robot(EnvBase):
             seed = torch.empty((), dtype=torch.int64).random_().item()
         self.set_seed(seed)
 
-        # Helpers: _make_step and gen_params
-        gen_params = staticmethod(gen_params)
-        _make_spec = _make_spec
-
-        # Mandatory methods: _step, _reset and _set_seed
-        _reset = _reset
-        _step = staticmethod(_step)
-        _set_seed = _set_seed
-
+       
+    @staticmethod
     def _step(tensordict):
         # даные состояния среды
         # координаты робота
@@ -77,8 +70,8 @@ class Robot(EnvBase):
         w_action = tensordict["action","w"].squeeze(-1) # угловая скорость робота
         # Котанты
         dt = tensordict["params", "dt"]
-        v_action =  v_action.clamp(-tensordict["params", "max_action"], tensordict["params", "max_action"])
-        w_action =  w_action.clamp(-tensordict["params", "max_action"], tensordict["params", "max_action"])
+        v_action =  v_action.clamp(-tensordict["params", "max_v"], tensordict["params", "max_v"])
+        w_action =  w_action.clamp(-tensordict["params", "max_w"], tensordict["params", "max_w"])
         
         # reward
         reward_target = 0
@@ -191,8 +184,8 @@ class Robot(EnvBase):
             old_x_target = Bounded(low=-CORD_RANGE,high=CORD_RANGE,shape=(1,),dtype=torch.float32),
             old_y_target = Bounded(low=-CORD_RANGE,high=CORD_RANGE,shape=(1,),dtype=torch.float32),
             
-            v_action = Bounded(low=-td_params["params", "max_action"],high=td_params["params", "max_action"],shape=(),dtype=torch.float32), # линейая скорость робота
-            w_action = Bounded(low=-td_params["params", "max_action"],high=td_params["params", "max_action"],shape=(),dtype=torch.float32), # угловая скорость робота
+            v_action = Bounded(low=-td_params["params", "max_v"],high=td_params["params", "max_v"],shape=(),dtype=torch.float32), # линейая скорость робота
+            w_action = Bounded(low=-td_params["params", "max_w"],high=td_params["params", "max_w"],shape=(),dtype=torch.float32), # угловая скорость робота
            
             params=self.make_composite_from_td(td_params["params"]),
             shape=(),
@@ -200,7 +193,7 @@ class Robot(EnvBase):
         
         self.state_spec = self.observation_spec.clone()
         
-        self.action_spec = Bounded(low=-td_params["params", "max_action"],high=td_params["params", "max_action"],shape=(2,),dtype=torch.float32)
+        self.action_spec = Bounded(low=-td_params["params", "max_v"],high=td_params["params", "max_v"],shape=(2,),dtype=torch.float32) ######
         
         self.reward_spec = Unbounded(shape=(*td_params.shape, 1))
     
@@ -221,7 +214,8 @@ class Robot(EnvBase):
     def _set_seed(self, seed: Optional[int]):
         rng = torch.manual_seed(seed)
         self.rng = rng
-
+        
+    @staticmethod
     def gen_params(batch_size=None) -> TensorDictBase:
         if batch_size is None:
             batch_size = []
@@ -229,13 +223,9 @@ class Robot(EnvBase):
             {
                 "params": TensorDict(
                     {
-                        "max_action": 0.5,
+                        "max_v": 0.5,
+                        "max_w": 0.5,
                         "dt": 0.1,
-                        "d_angl": 0,
-                        "xr": 0,
-                        "yr": 0,
-                        "xt": 0,
-                        "yt": 0,
                     },
                     [],
                 )
