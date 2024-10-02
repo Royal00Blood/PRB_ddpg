@@ -56,47 +56,45 @@ class Robot(EnvBase):
         _set_seed = _set_seed
 
     def _step(tensordict):
+        # даные состояния среды
         # координаты робота
         x_robot = tensordict["xr"]
         y_robot = tensordict["yr"]  
         # координаты цели
         x_target = tensordict["xt"]
         y_target = tensordict["yt"]
-        
-        angl = tensordict["angl"]
+        # угол робота
+        angle = tensordict["angle"]
+        #  прошлые координаты 
+        # робота
+        old_x_robot = tensordict["old","xr"]
+        old_y_robot = tensordict["old","yr"]  
+        # цели
+        old_x_target = tensordict["old","xt"]
+        old_y_target = tensordict["old","yt"]
         
         v_action = tensordict["action","v"].squeeze(-1) # линейая скорость робота
         w_action = tensordict["action","w"].squeeze(-1) # угловая скорость робота
-        
+        # Котанты
         dt = tensordict["params", "dt"]
-        d_angl_old = tensordict["params","d_angl"]
-        
         v_action =  v_action.clamp(-tensordict["params", "max_action"], tensordict["params", "max_action"])
         w_action =  w_action.clamp(-tensordict["params", "max_action"], tensordict["params", "max_action"])
+        
         # reward
+        reward_target = 0
         
-        # координаты робота
-        old_x_robot = tensordict["params","xr"]
-        old_y_robot = tensordict["params","yr"]  
-        # координаты цели
-        old_x_target = tensordict["params","xt"]
-        old_y_target = tensordict["params","yt"]
-        
-        
-        new_angl = angl + (w_action * dt) 
-        new_x_robot = x_robot + v_action * np.cos(new_angl) * dt
-        new_y_robot = y_robot + v_action * np.sin(new_angl) * dt
+        new_angle = angle + (w_action * dt) 
+        new_x_robot = x_robot + v_action * np.cos(new_angle) * dt
+        new_y_robot = y_robot + v_action * np.sin(new_angle) * dt
         
         if( - AREA_DEFEAT > x_robot or x_robot > AREA_DEFEAT  or
             - AREA_DEFEAT > y_robot or y_robot > AREA_DEFEAT):
-            reward_target = -REWARD
             done = True
-            
+            reward_target = -REWARD
         elif ( x_target + AREA_WIN > x_robot > x_target - AREA_WIN   and
                 y_target + AREA_WIN > y_robot > y_target - AREA_WIN):
             done = True
             reward_target = REWARD
-            
         else:
             # dist
             # координаты цели
@@ -111,47 +109,31 @@ class Robot(EnvBase):
             # координаты цели
             old_x_target = x_target
             old_y_target = y_target
-            
-            if dist_new < dist_old:
-                dist_reward = 17
-            else:
-                dist_reward = 0
+            # награда за изменение растояния
+            dist_reward = dist_old - dist_new
             # angle
-            delta_angle = d_ang(x_robot, y_robot,
-                                    x_target, y_target,
-                                    new_angl
-                                    ).get_angle_dev()
-
-            if delta_angle == 0.0:
-                angle_reward = 17
-            elif abs(delta_angle) < np.pi / 2 and abs(delta_angle) < abs(d_angl_old):
-                angle_reward = -10.85 * delta_angle + 9.28
-            else:
-                angle_reward = 0
+            delta_angle = d_ang(x_robot, y_robot, x_target, y_target, new_angle).get_angle_dev()
+            angle_reward = -abs(delta_angle)
+            reward_target = dist_reward + angle_reward
+         
             
-        if abs(reward_target) != REWARD:    
-            costs = dist_reward + angle_reward
-        else:
-            costs = reward_target   
-            
-        reward = -costs.view(*tensordict.shape, 1)    
+        reward = reward_target.view(*tensordict.shape, 1)    
         done = torch.zeros_like(reward, dtype=torch.bool)
         out = TensorDict(
             {
-                "xr": new_x_robot, 
-                "yr": new_y_robot,
-                "xt":  x_target,
-                "yt":  y_target,
-                "angl":  new_angl,
-                
-                ["params","d_angl"]:delta_angle,
-                ["params","xt"]:x_target,
-                ["params","yt"]:y_target,
-                
+                "xr":    new_x_robot, 
+                "yr":    new_y_robot,
+                "xt":    x_target,
+                "yt":    y_target,
+                "angle": new_angle,
+                ["action","v"]: v_action,
+                ["action","w"]: w_action,
+                ["old","xr"]: old_x_robot,
+                ["old","yr"]: old_y_robot,
+                ["old","xt"]: old_x_target,
+                ["old","yt"]: old_y_target,
                 "params": tensordict["params"],
-                
                 "reward": reward,
-                
                 "done": done,
             },
             tensordict.shape,
@@ -178,11 +160,17 @@ class Robot(EnvBase):
             + low_yt
         )
         out = TensorDict(
-            {   "xr": 0, 
-                "yr": 0,
-                "xt": xt,
-                "yt": yt,
-                "angl": 0,
+            {   "xr":    0, 
+                "yr":    0,
+                "xt":    xt,
+                "yt":    yt,
+                "angle": 0,
+                ["action","v"]: 0,
+                ["action","w"]: 0,
+                ["old","xr"]: 0,
+                ["old","yr"]: 0,
+                ["old","xt"]: 0,
+                ["old","yt"]: 0,
                 "params": tensordict["params"],
             },
             batch_size=tensordict.shape,
@@ -197,6 +185,11 @@ class Robot(EnvBase):
             xt=Bounded(low=-CORD_RANGE,high=CORD_RANGE,shape=(1,),dtype=torch.float32),
             yt=Bounded(low=-CORD_RANGE,high=CORD_RANGE,shape=(1,),dtype=torch.float32),
             angl = Bounded(low=-ANGL_RANGE,high=ANGL_RANGE,shape=(1,),dtype=torch.float32),
+            
+            old_x_robot = Bounded(low=-CORD_RANGE,high=CORD_RANGE,shape=(1,),dtype=torch.float32),
+            old_y_robot = Bounded(low=-CORD_RANGE,high=CORD_RANGE,shape=(1,),dtype=torch.float32), 
+            old_x_target = Bounded(low=-CORD_RANGE,high=CORD_RANGE,shape=(1,),dtype=torch.float32),
+            old_y_target = Bounded(low=-CORD_RANGE,high=CORD_RANGE,shape=(1,),dtype=torch.float32),
             
             v_action = Bounded(low=-td_params["params", "max_action"],high=td_params["params", "max_action"],shape=(),dtype=torch.float32), # линейая скорость робота
             w_action = Bounded(low=-td_params["params", "max_action"],high=td_params["params", "max_action"],shape=(),dtype=torch.float32), # угловая скорость робота
