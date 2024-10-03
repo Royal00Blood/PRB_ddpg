@@ -26,8 +26,8 @@ class Critic(nn.Module):
             nn.init.kaiming_normal_(layer.weight, mode='fan_out', nonlinearity='relu')
             nn.init.constant_(layer.bias, 0.1)
         
-    def forward(self, state, action ):
-        layer_1 = F.relu(self.batch_norm_1(self.layer_1(torch.cat([state, action], dim=1))))
+    def forward(self, state_action ):
+        layer_1 = F.relu(self.batch_norm_1(self.layer_1(state_action)))
         layer_2 = F.relu(self.batch_norm_2(self.layer_2(layer_1)))
         q_val = self.q(layer_2)
         return q_val 

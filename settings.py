@@ -7,8 +7,8 @@ ALPHA = 0.6
 GAMMA = 0.99   # 0.95 to 0.999
 TAU   = 0.01 # 0.001 to 0.01
 
-LR_A = 0.0007 # 0.0001 to 0.001
-LR_C = 0.005 # 0.001 to 0.01
+LR_A = 0.0001 # 0.0001 to 0.001
+LR_C = 0.001 # 0.001 to 0.01
 
 WEIGHT_DEC = 0.001 # 0.0001 0.01
 REWARD = 500
@@ -40,9 +40,8 @@ SEED = 200
 
 # Кол нейронов в слоях
     #[ly1, ly2, ly3(v/w), ly4(v/w), ly5(v/w)] 
-# L_A  = [400, 300, 200, 100]
 L_A  = [400, 300, 260, 100]
-L_C1 = [200, 200, 200]
-L_C2 = [200, 200, 100]
+L_C1 = [400, 350, 200]
 
-DIR_CHEKPOINT = "C:/Users/Anton/Documents/Python/PRB_ddpg/chekpoints"
+
+DIR_CHEKPOINT = "C:/Users/Ivan/Documents/python_github/PRB_ddpg/chekpoints"
