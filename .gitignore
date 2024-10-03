@@ -1,6 +1,7 @@
 # Compiled output
 /runs
 /images
+/chekpoints
 **/__pycache__
 __init__.py
 __pycache__/*
