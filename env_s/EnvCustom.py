@@ -74,18 +74,15 @@ class CustomEnv(gym.Env):
         else:
             self.__old_target_point = [self.__target_point[0], self.__target_point[1]]
             self.__old_position_robot = [self.__position_robot[0], self.__position_robot[1]]
-            self.__delta_angle_old = self.__delta_angle 
             
-            return self.__dist_reward() + self.__angle_reward()# - self.__number
+            return self.__dist_reward() + self.__angle_reward()
                        
     def __dist_reward(self):
-        # dist_new = d_dist(self.__target_point[0], self.__target_point[1], self.__position_robot[0], self.__position_robot[1]).getDistance()
-        # dist_old = d_dist(self.__old_target_point[0], self.__old_target_point[1], self.__old_position_robot[0], self.__old_position_robot[1]).getDistance()
-        # self.__old_target_point = [self.__target_point[0], self.__target_point[1]]
-        # self.__old_position_robot = [self.__position_robot[0], self.__position_robot[1]]
-
-        distance = np.linalg.norm(np.array([self.__position_robot[0], self.__position_robot[1]]) - np.array([self.__target_point[0], self.__target_point[1]]))
-        return -distance  
+        dist_new = d_dist(self.__target_point[0], self.__target_point[1], self.__position_robot[0], self.__position_robot[1]).getDistance()
+        dist_old = d_dist(self.__old_target_point[0], self.__old_target_point[1], self.__old_position_robot[0], self.__old_position_robot[1]).getDistance()
+        self.__old_target_point = [self.__target_point[0], self.__target_point[1]]
+        self.__old_position_robot = [self.__position_robot[0], self.__position_robot[1]]
+        return dist_old - dist_new 
            
     def __angle_reward(self):
         self.__delta_angle = d_ang(self.__position_robot[0], self.__position_robot[1],

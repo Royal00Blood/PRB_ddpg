@@ -29,7 +29,7 @@ TIME = 0.1
 
 # Параметры обучения
 EPISODES = 5000
-EP_STEPS = 1000
+EP_STEPS = 100
 
 #  Параметры проверки
 TEST_EPISODES = 100
