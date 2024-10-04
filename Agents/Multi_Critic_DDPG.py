@@ -83,7 +83,7 @@ class PRB_DDPG_Agent:
         # Update Critic
         targets=[]
         for i in range(self.batch_size):
-            next_action = self.actor(next_states[i])
+            next_action = self.actor_target(next_states[i])
             next_states_action = torch.cat((next_states[i],next_action), dim=0)
             next_q_values = self.critic_target(next_states_action)
             target = rewards[i] + (1-dones[i]) * self.gamma * next_q_values
@@ -94,10 +94,10 @@ class PRB_DDPG_Agent:
         
         states_actions = torch.cat((states, actions),dim=1).to(device)
         critic_loss = torch.mean(weights *(targets.detach() - self.critic(states_actions))**2).to(device)
-        
         critic_loss.backward()
         self.critic_optimizer.step()
         self.critic_optimizer.zero_grad()
+        
         
         # Update Actor
         actors_1 = self.actor(states).to(device)
@@ -107,12 +107,13 @@ class PRB_DDPG_Agent:
         self.actor_optimizer.step()
         self.actor_optimizer.zero_grad()
         
+        self.update_target_networks()
         # Update Priorities
         new_priorities = (critic_loss.detach().cpu().numpy()  + 1e-5) / 2
         self.replay_buffer.update_priority(indices, new_priorities)
         
         # Update Target Networks
-        self.update_target_networks()
+        
         self.writer.add_scalar('Actor Loss'    , actor_loss.item()  , self.global_step)
         self.writer.add_scalar('Critic Loss'   , critic_loss.item() , self.global_step)
         self.writer.add_scalar('Average Reward', torch.mean(rewards), self.global_step)
