@@ -63,7 +63,6 @@ class PRB_DDPG_Agent:
         self.soft_update(self.critic, self.critic_target, self.tau)
     
     def update(self):
-        
         transitions, indices, weights = self.replay_buffer.sample(self.batch_size)
         if transitions is None:
             return

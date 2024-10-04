@@ -41,7 +41,7 @@ SEED = 200
 # Кол нейронов в слоях
     #[ly1, ly2, ly3(v/w), ly4(v/w), ly5(v/w)] 
 L_A  = [400, 300, 260, 100]
-L_C1 = [400, 350, 200]
+L_C1 = [100, 250, 300]
 
 
 DIR_CHEKPOINT = "C:/Users/Ivan/Documents/python_github/PRB_ddpg/chekpoints"

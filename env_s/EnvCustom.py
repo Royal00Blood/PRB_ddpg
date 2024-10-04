@@ -79,7 +79,7 @@ class CustomEnv(gym.Env):
             self.__delta_angle_old = self.__delta_angle 
             
            #print(f"reward: {self.__angle_reward()} dist: {self.__dist_reward()}" )
-            reward = self.__dist_reward() #+ self.__angle_reward() - self.__number
+            reward = self.__dist_reward() + self.__angle_reward()# - self.__number
            # print(f"reward:{reward} angle {self.__angle_reward()} dist: {self.__dist_reward()}" )
             return reward
                        
