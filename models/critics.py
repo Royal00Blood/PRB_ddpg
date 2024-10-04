@@ -39,6 +39,6 @@ class Critic(nn.Module):
         torch.save(self.state_dict(), self.chekpoint)
 
     def load_checkpoint(self):
-        self.load_state_dict(torch.load(self.chekpointe))    
+        self.load_state_dict(torch.load(self.chekpoint))    
 
 

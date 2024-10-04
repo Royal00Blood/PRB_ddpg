@@ -10,4 +10,4 @@ env = env_learn()
 agent = Agent()
 agent.train(env)
                   
-#agent.test(env,max_episodes=TEST_EPISODES,max_steps=TEST_EP_STEPS)
+agent.test(env,max_episodes=TEST_EPISODES,max_steps=TEST_EP_STEPS)
