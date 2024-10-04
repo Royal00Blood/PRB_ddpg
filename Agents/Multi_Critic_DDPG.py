@@ -83,23 +83,17 @@ class PRB_DDPG_Agent:
         #print(f"a= {actions.size()}, s= {states.size()}, r= {rewards.size()}, sn= {next_states.size()}, done= {dones.size()} ")
         
         # Update Critic
-        # targets=[]
-        # for i in range(self.batch_size):
         next_action = self.actor_target(next_states)
         next_states_action = torch.cat((next_states,next_action), dim=1)
         next_q_values = self.critic_target(next_states_action)
         targets = rewards + (1-dones) * self.gamma * next_q_values
-            # targets.append(target)
-        targets = torch.tensor(targets)
         
         # Calcualte error learn
-        
         states_actions = torch.cat((states, actions),dim=1).to(device)
         critic_loss = torch.mean(weights *(targets.detach() - self.critic(states_actions))**2).to(device)
         critic_loss.backward()
         self.critic_optimizer.step()
         self.critic_optimizer.zero_grad()
-        
         
         # Update Actor
         actors_1 = self.actor(states).to(device)
