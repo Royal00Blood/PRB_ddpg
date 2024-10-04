@@ -24,7 +24,7 @@ class Critic(nn.Module):
         self.reset_parameters()
         
     def reset_parameters(self):
-        for layer in [self.layer_1, self.layer_2]:
+        for layer in [self.layer_1, self.layer_2,  self.layer_3]:
             nn.init.kaiming_normal_(layer.weight, mode='fan_out', nonlinearity='relu')
             nn.init.constant_(layer.bias, 0.1)
         

@@ -27,9 +27,9 @@ class CustomEnv(gym.Env):
     def __reset_robot(self):
         self.__position_robot = np.zeros(2) # The position of the robot [x, y]
         self.__robot_quat     = np.zeros(4) # Quaternions [Qx, Qy, Qz, Qw]
-        self.__target_point =[random.choice([random.uniform(S_G_TARG, AREA_GENERATION), random.uniform(-AREA_GENERATION,-S_G_TARG)]),
-                              random.choice([random.uniform(S_G_TARG, AREA_GENERATION), random.uniform(-AREA_GENERATION,-S_G_TARG)])]
-            
+        # self.__target_point =[random.choice([random.uniform(S_G_TARG, AREA_GENERATION), random.uniform(-AREA_GENERATION,-S_G_TARG)]),
+        #                       random.choice([random.uniform(S_G_TARG, AREA_GENERATION), random.uniform(-AREA_GENERATION,-S_G_TARG)])]
+        self.__target_point =[random.uniform(S_G_TARG, AREA_GENERATION), random.uniform(S_G_TARG, AREA_GENERATION)]    
         self.__old_target_point = self.__target_point
         self.__old_position_robot = 0.0
         
@@ -73,42 +73,25 @@ class CustomEnv(gym.Env):
                 return -REWARD
         else:
             self.__old_target_point = [self.__target_point[0], self.__target_point[1]]
-            
             self.__old_position_robot = [self.__position_robot[0], self.__position_robot[1]]
-            
             self.__delta_angle_old = self.__delta_angle 
             
-           #print(f"reward: {self.__angle_reward()} dist: {self.__dist_reward()}" )
-            reward = self.__dist_reward() + self.__angle_reward()# - self.__number
-           # print(f"reward:{reward} angle {self.__angle_reward()} dist: {self.__dist_reward()}" )
-            return reward
+            return self.__dist_reward() + self.__angle_reward()# - self.__number
                        
     def __dist_reward(self):
         # dist_new = d_dist(self.__target_point[0], self.__target_point[1], self.__position_robot[0], self.__position_robot[1]).getDistance()
         # dist_old = d_dist(self.__old_target_point[0], self.__old_target_point[1], self.__old_position_robot[0], self.__old_position_robot[1]).getDistance()
         # self.__old_target_point = [self.__target_point[0], self.__target_point[1]]
         # self.__old_position_robot = [self.__position_robot[0], self.__position_robot[1]]
-        
-        # if dist_new < dist_old:
-        #     return 17
-        # else:
-        #     return 0
-        distance = np.linalg.norm(np.array([self.__position_robot[0], self.__position_robot[1]]) - np.array([self.__target_point[0], self.__target_point[1]]))
 
-        # 2. Награда на основе расстояния - чем ближе, тем лучше
-        return -distance  # Обратная пропорция к расстоянию
+        distance = np.linalg.norm(np.array([self.__position_robot[0], self.__position_robot[1]]) - np.array([self.__target_point[0], self.__target_point[1]]))
+        return -distance  
            
     def __angle_reward(self):
         self.__delta_angle = d_ang(self.__position_robot[0], self.__position_robot[1],
                                    self.__target_point[0], self.__target_point[1],
                                    self.__d_angl_rad
                                    ).get_angle_dev()
-        # if self.__delta_angle == 0.0:
-        #     return 17
-        # elif abs(self.__delta_angle) < np.pi / 2 and abs(self.__delta_angle) < abs(self.__delta_angle_old):
-        #     return -10.85 * self.__delta_angle + 9.28
-        # else:
-        #     return 0
         return -abs(self.__delta_angle)
               
     def __check_done(self):
