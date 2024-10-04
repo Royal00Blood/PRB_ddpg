@@ -71,14 +71,9 @@ class PRB_DDPG_Agent:
         if transitions is None:
             return
         
-        states, actions, rewards, next_states, dones = zip(*transitions)
-        
-        states = torch.tensor(np.array(states), dtype=torch.float32).to(device)
-        actions = torch.tensor(np.array(actions), dtype=torch.float32).to(device)
-        next_states = torch.tensor(np.array(next_states), dtype=torch.float32).to(device)
-        rewards = torch.tensor(np.array(rewards), dtype=torch.float32).to(device)
-        dones = torch.tensor(np.array(dones), dtype=torch.float32).to(device)
-        weights = torch.tensor(np.array(weights), dtype=torch.float32).to(device)
+        states, actions, rewards, next_states, dones = map(torch.tensor,zip(*transitions)).to(device)
+        rewards = rewards.reshape(self.batch_size,1)
+        dones = dones.reshape(self.batch_size,1)
         
         # Update Critic
         targets=[]
