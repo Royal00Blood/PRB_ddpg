@@ -9,7 +9,7 @@ from settings import (S_SIZE, A_SIZE, LR_A, LR_C, L_C1,
                       BATCH_SIZE,GAMMA,BUFFER_SIZE,
                       ALPHA, TAU, EPISODES,
                       EP_STEPS, TEST_EP_STEPS,
-                      TEST_EPISODES, A_MAX, WEIGHT_DEC)
+                      TEST_EPISODES, A_MAX, WEIGHT_DEC,N_DIC)
 from torch.utils.tensorboard import SummaryWriter
 from buffers.PrioritizedReplayBuffer import PrioritizedReplayBuffer
 import time
@@ -21,7 +21,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class PRB_DDPG_Agent:
     def __init__(self, state_size=S_SIZE, action_size=A_SIZE, lr_actor=LR_A, lr_critic=LR_C, 
                  gamma=GAMMA, tau=TAU, buffer_size=BUFFER_SIZE, batch_size=BATCH_SIZE, alpha=ALPHA,
-                 weight_decay = WEIGHT_DEC, action_max=A_MAX):
+                 weight_decay = WEIGHT_DEC, action_max=A_MAX, n_dic=N_DIC):
         
         self.state_size = state_size
         self.action_size = action_size
@@ -37,8 +37,10 @@ class PRB_DDPG_Agent:
         comment = f"lr_actor={lr_actor}, lr_critic={lr_critic}, gamma={gamma}, tau={tau}, buffer_size={buffer_size}, batch_size={batch_size}"
         self.writer = SummaryWriter(comment=comment)
         self.global_step = 0
-        self.noise = Noise(self.action_size)
         self.layers_critic = L_C1
+        self.noise = Noise(self.action_size)
+        self.n_treshold =1
+        self.n_dic = n_dic
         
         self.actor = torch.compile(Actor(self.state_size, self.action_size)).to(device)
         self.critic = torch.compile(Critic(self.state_size, self.action_size,layers=self.layers_critic, name="critic")).to(device)
@@ -49,19 +51,21 @@ class PRB_DDPG_Agent:
         
     def get_action(self,state):
         state = torch.tensor(state, dtype=torch.float32).to(device)
-        action = self.actor(state).detach().cpu().numpy() + self.noise.sample()
-        return np.clip(a=action,a_min = -self.action_max, a_max = self.action_max)
-    
+        action = self.actor(state).detach().cpu().numpy() 
+        action_n = action + self.noise.sample()*self.n_treshold
+        action = np.clip(a=action_n,a_min = -self.action_max, a_max = self.action_max)
+        return action
+      
+    def update_target_networks(self):
+        """Update the target networks."""
+        self.soft_update(self.actor  , self.actor_target, self.tau)
+        self.soft_update(self.critic, self.critic_target, self.tau)
+        
     def soft_update(self, source, target, tau):
         """Softly update target network parameters."""
         for target_param, param in zip(target.parameters(), source.parameters()):
             target_param.data.copy_(target_param.data * (1.0 - tau) + param.data * tau)
             
-    def update_target_networks(self):
-        """Update the target networks."""
-        self.soft_update(self.actor  , self.actor_target  , self.tau)
-        self.soft_update(self.critic, self.critic_target, self.tau)
-    
     def update(self):
         transitions, indices, weights = self.replay_buffer.sample(self.batch_size)
         if transitions is None:
@@ -102,6 +106,7 @@ class PRB_DDPG_Agent:
         actor_loss.backward()
         self.actor_optimizer.step()
         self.actor_optimizer.zero_grad()
+        
         # Update Priorities
         new_priorities = (critic_loss.detach().cpu().numpy()  + 1e-5) / 2
         self.replay_buffer.update_priority(indices, new_priorities)
@@ -123,7 +128,6 @@ class PRB_DDPG_Agent:
         self.actor.load_checkpoint()
         self.actor_target.load_checkpoint()
         self.critic.load_checkpoint()
-        self.critic_target.load_checkpoint()
         self.critic_target.load_checkpoint()
            
     def train(self, env, num_episodes=EPISODES, ep_steps=EP_STEPS):
@@ -163,6 +167,9 @@ class PRB_DDPG_Agent:
                 torch.save(self.actor.state_dict()  , 'actor_weights.pth')
                 torch.save(self.critic.state_dict(), 'critic_weights.pth')
                 self.save_models()
+                
+        if self.n_treshold>0:
+            self.n_treshold = max(0,self.n_treshold-self.n_dic)    
             
         # Сохранение весов и моделей 
         torch.save(self.actor.state_dict()  ,'actor_weights.pth')
