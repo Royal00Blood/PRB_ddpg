@@ -50,7 +50,7 @@ class PRB_DDPG_Agent:
         self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=self.lr_critic, weight_decay=self.weight_decay)
         
     def get_action(self,state):
-        state = torch.tensor(state, dtype=torch.float32).to(device)
+        state = torch.FloatTensor(state).to(device)
         action = self.actor(state).detach().cpu().numpy() 
         action_n = action + self.noise.sample()*self.n_treshold
         action = np.clip(a=action_n,a_min = -self.action_max, a_max = self.action_max)
@@ -71,19 +71,26 @@ class PRB_DDPG_Agent:
         if transitions is None:
             return
         
-        states, actions, rewards, next_states, dones = map(torch.tensor,zip(*transitions)).to(device)
+        states, actions, rewards, next_states, dones = zip(*transitions)
+        states = torch.FloatTensor(states).to(device)
+        actions = torch.FloatTensor(actions).to(device)
+        next_states = torch.FloatTensor(next_states).to(device)
+        rewards = torch.FloatTensor(rewards).to(device)
         rewards = rewards.reshape(self.batch_size,1)
+        dones = torch.FloatTensor(dones).to(device)
         dones = dones.reshape(self.batch_size,1)
+        weights =  torch.FloatTensor(weights).to(device)
+        #print(f"a= {actions.size()}, s= {states.size()}, r= {rewards.size()}, sn= {next_states.size()}, done= {dones.size()} ")
         
         # Update Critic
-        targets=[]
-        for i in range(self.batch_size):
-            next_action = self.actor_target(next_states[i])
-            next_states_action = torch.cat((next_states[i],next_action), dim=0)
-            next_q_values = self.critic_target(next_states_action)
-            target = rewards[i] + (1-dones[i]) * self.gamma * next_q_values
-            targets.append(target)
-        targets = torch.tensor(targets).to(device) 
+        # targets=[]
+        # for i in range(self.batch_size):
+        next_action = self.actor_target(next_states)
+        next_states_action = torch.cat((next_states,next_action), dim=1)
+        next_q_values = self.critic_target(next_states_action)
+        targets = rewards + (1-dones) * self.gamma * next_q_values
+            # targets.append(target)
+        targets = torch.tensor(targets)
         
         # Calcualte error learn
         
