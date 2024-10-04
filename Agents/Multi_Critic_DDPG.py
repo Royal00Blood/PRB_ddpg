@@ -143,8 +143,10 @@ class PRB_DDPG_Agent:
             episode_reward = 0
             env.set_number(episode)
             
-            # for _ in range(ep_steps):
-            while not done:
+            for _ in range(ep_steps):
+            # while not done:
+                if done:
+                    break
                 action =self.get_action(state) 
                 next_state, reward, done, _ = env.step(action)
                 
