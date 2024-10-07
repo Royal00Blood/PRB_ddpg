@@ -5,7 +5,7 @@ ALPHA = 0.6
 
 # Гиперпараметры
 GAMMA = 0.99   # 0.9 to 0.999
-TAU   = 0.01 # 0.001 to 0.01
+TAU   = 0.008 # 0.001 to 0.01
 
 LR_A = 0.0001 # 0.0001 to 0.001
 LR_C = 0.001 # 0.001 to 0.01
@@ -28,7 +28,7 @@ AREA_GENERATION = AREA_DEFEAT - 0.4
 TIME = 0.1
 
 # Параметры обучения
-EPISODES = 500
+EPISODES = 1000
 EP_STEPS = 350
 
 #  Параметры проверки
@@ -40,9 +40,10 @@ SEED = 200
 
 # Кол нейронов в слоях
     #[ly1, ly2, ly3(v/w), ly4(v/w), ly5(v/w)] 
-L_A  = [400, 300, 260]
-L_C1 = [100, 250, 300]
+L_A  = [400, 350, 300, 250]
+#L_C1 = [100, 250, 300]
+L_C1 = [300, 250, 100]
 
-
-DIR_CHEKPOINT = "C:/Users/Ivan/Documents/python_github/PRB_ddpg/chekpoints"
+DIR_CHEKPOINT = "C:/Users/Anton/Documents/Python/PRB_ddpg/chekpoints"
+#DIR_CHEKPOINT = "C:/Users/Ivan/Documents/python_github/PRB_ddpg/chekpoints"
 N_DIC = 1/ EPISODES* EP_STEPS

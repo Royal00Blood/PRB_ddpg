@@ -24,11 +24,27 @@ class Actor(nn.Module):
         
         self.layer_1 = nn.Linear(state_size, layers[0])
         self.batch_norm_1 = nn.LayerNorm(layers[0])
-        self.layer_2 = nn.Linear(layers[0], layers[1])
-        self.batch_norm_2 = nn.LayerNorm(layers[1])
-        self.layer_3 = nn.Linear(layers[1], layers[2])
-        self.batch_norm_3 = nn.LayerNorm(layers[2])
-        self.layer_4 = nn.Linear(layers[2], action_size)
+        
+        self.layer_2v = nn.Linear(layers[0], layers[1])
+        self.batch_norm_2v = nn.LayerNorm(layers[1])
+        
+        self.layer_3v = nn.Linear(layers[1], layers[2])
+        self.batch_norm_3v = nn.LayerNorm(layers[2])
+        
+        self.layer_4v = nn.Linear(layers[2], layers[3])
+        self.batch_norm_4v = nn.LayerNorm(layers[3])
+        
+        
+        self.layer_2w = nn.Linear(layers[0], layers[1])
+        self.batch_norm_2w = nn.LayerNorm(layers[1])
+        
+        self.layer_3w = nn.Linear(layers[1], layers[2])
+        self.batch_norm_3w = nn.LayerNorm(layers[2])
+        
+        self.layer_4w = nn.Linear(layers[2], layers[3])
+        self.batch_norm_4w = nn.LayerNorm(layers[3])
+        
+        self.layer_5 = nn.Linear(layers[3], action_size)
          
         # init weights
         self.reset_weights()
