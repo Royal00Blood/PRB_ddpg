@@ -7,11 +7,11 @@ ALPHA = 0.6
 GAMMA = 0.99   # 0.9 to 0.999
 TAU   = 0.01 # 0.001 to 0.01
 
-LR_A = 0.0001 # 0.0001 to 0.001
-LR_C = 0.002 # 0.001 to 0.01
+LR_A = 0.0004 # 0.0001 to 0.001
+LR_C = 0.003 # 0.001 to 0.01
 
 WEIGHT_DEC = 0.001 # 0.0001 0.01
-REWARD = 2000
+REWARD = 500
 # Параметры среды
 S_SIZE  = 5
 A_SIZE = 2
@@ -28,8 +28,8 @@ AREA_GENERATION = AREA_DEFEAT - 0.4
 TIME = 0.1
 
 # Параметры обучения
-EPISODES = 2000
-EP_STEPS = 300
+EPISODES = 500
+EP_STEPS = 350
 
 #  Параметры проверки
 TEST_EPISODES = 100
