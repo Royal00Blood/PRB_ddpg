@@ -1,14 +1,14 @@
 # Буфер-параметры
 BUFFER_SIZE = 1000000 #от 10000 до 1000000
-BATCH_SIZE  = 120 # 32 to 256
+BATCH_SIZE  = 60 # 32 to 256
 ALPHA = 0.6
 
 # Гиперпараметры
-GAMMA = 0.99   # 0.9 to 0.999
-TAU   = 0.01 # 0.001 to 0.01
+GAMMA = 0.999   # 0.9 to 0.999
+TAU   = 0.007 # 0.001 to 0.01
 
-LR_A = 0.0003 # 0.0001 to 0.001
-LR_C = 0.002 # 0.001 to 0.01
+LR_A = 0.0001 # 0.0001 to 0.001
+LR_C = 0.001 # 0.001 to 0.01
 
 WEIGHT_DEC = 0.001 # 0.0001 0.01
 REWARD = 500
@@ -28,12 +28,12 @@ AREA_GENERATION = AREA_DEFEAT - 0.4
 TIME = 0.1
 
 # Параметры обучения
-EPISODES = 1000
-EP_STEPS = 350
+EPISODES = 1500
+EP_STEPS = 150
 
 #  Параметры проверки
 TEST_EPISODES = 100
-TEST_EP_STEPS = 300
+TEST_EP_STEPS = 150
 
 # Параметры моделей
 SEED = 200
