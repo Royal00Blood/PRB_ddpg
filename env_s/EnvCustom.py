@@ -68,7 +68,7 @@ class CustomEnv(gym.Env):
     def __new_reward(self, goal):
         if self.done:
             if goal:
-                return 0 #REWARD
+                return REWARD
             else:
                 return -REWARD
         else:
