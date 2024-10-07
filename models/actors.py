@@ -80,7 +80,7 @@ class Actor(nn.Module):
         w = self.layer_4v(w)
         w = F.relu(self.batch_norm_4v(v))
         
-        vw = torch.cat((self.layer5(v), self.layer5(w)), dim=1)
+        vw = torch.cat((self.layer_5(v), self.layer_5(w)), dim=-1)
         
         action = F.tanh(vw)* self.action_max
         return action
