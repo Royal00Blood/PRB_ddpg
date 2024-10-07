@@ -4,14 +4,14 @@ BATCH_SIZE  = 120 # 32 to 256
 ALPHA = 0.6
 
 # Гиперпараметры
-GAMMA = 0.99   # 0.95 to 0.999
+GAMMA = 0.99   # 0.9 to 0.999
 TAU   = 0.01 # 0.001 to 0.01
 
-LR_A = 0.0007 # 0.0001 to 0.001
-LR_C = 0.005 # 0.001 to 0.01
+LR_A = 0.0001 # 0.0001 to 0.001
+LR_C = 0.001 # 0.001 to 0.01
 
 WEIGHT_DEC = 0.001 # 0.0001 0.01
-REWARD = 500
+REWARD = 2000
 # Параметры среды
 S_SIZE  = 5
 A_SIZE = 2
@@ -20,29 +20,29 @@ A_MAX = 0.5
 S_MAX  = 10.0
 
 #диапазон ограничений поля
-AREA_WIN    = 0.05
+AREA_WIN    = 0.1
 AREA_DEFEAT = 1.8
-S_G_TARG = AREA_WIN * 3
+S_G_TARG = AREA_WIN * 4
 
-AREA_GENERATION = AREA_DEFEAT - 0.2
+AREA_GENERATION = AREA_DEFEAT - 0.4
 TIME = 0.1
 
 # Параметры обучения
-EPISODES = 5000
-EP_STEPS = 500
+EPISODES = 2000
+EP_STEPS = 300
 
 #  Параметры проверки
 TEST_EPISODES = 100
-TEST_EP_STEPS = 200
+TEST_EP_STEPS = 300
 
 # Параметры моделей
 SEED = 200
 
 # Кол нейронов в слоях
     #[ly1, ly2, ly3(v/w), ly4(v/w), ly5(v/w)] 
-# L_A  = [400, 300, 200, 100]
-L_A  = [400, 300, 260, 100]
-L_C1 = [200, 200, 200]
-L_C2 = [200, 200, 100]
+L_A  = [400, 300, 260]
+L_C1 = [100, 250, 300]
 
-DIR_CHEKPOINT = "C:/Users/Anton/Documents/Python/PRB_ddpg/chekpoints"
+
+DIR_CHEKPOINT = "C:/Users/Ivan/Documents/python_github/PRB_ddpg/chekpoints"
+N_DIC = 1/ EPISODES* EP_STEPS

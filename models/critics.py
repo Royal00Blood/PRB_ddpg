@@ -18,24 +18,27 @@ class Critic(nn.Module):
         self.batch_norm_1 = nn.LayerNorm(layers[0])
         self.layer_2 = nn.Linear(layers[0], layers[1])
         self.batch_norm_2 = nn.LayerNorm(layers[1])
-        self.q = nn.Linear(layers[1], 1)
+        self.layer_3 = nn.Linear(layers[1], layers[2])
+        self.batch_norm_3 = nn.LayerNorm(layers[2])
+        self.q = nn.Linear(layers[2], 1)
         self.reset_parameters()
         
     def reset_parameters(self):
-        for layer in [self.layer_1, self.layer_2]:
+        for layer in [self.layer_1, self.layer_2,  self.layer_3]:
             nn.init.kaiming_normal_(layer.weight, mode='fan_out', nonlinearity='relu')
             nn.init.constant_(layer.bias, 0.1)
         
-    def forward(self, state, action ):
-        layer_1 = F.relu(self.batch_norm_1(self.layer_1(torch.cat([state, action], dim=1))))
+    def forward(self, state_action ):
+        layer_1 = F.relu(self.batch_norm_1(self.layer_1(state_action)))
         layer_2 = F.relu(self.batch_norm_2(self.layer_2(layer_1)))
-        q_val = self.q(layer_2)
+        layer_3 = F.relu(self.batch_norm_3(self.layer_3(layer_2)))
+        q_val = self.q(layer_3)
         return q_val 
     
     def save_checkpoint(self):
         torch.save(self.state_dict(), self.chekpoint)
 
     def load_checkpoint(self):
-        self.load_state_dict(torch.load(self.chekpointe))    
+        self.load_state_dict(torch.load(self.chekpoint))    
 
 

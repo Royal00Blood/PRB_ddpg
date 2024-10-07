@@ -5,11 +5,11 @@ import numpy as np
 from models.actors import Actor
 from models.critics import Critic
 import os
-from settings import (S_SIZE, A_SIZE, LR_A, LR_C, L_C1, L_C2,
+from settings import (S_SIZE, A_SIZE, LR_A, LR_C, L_C1,
                       BATCH_SIZE,GAMMA,BUFFER_SIZE,
                       ALPHA, TAU, EPISODES,
                       EP_STEPS, TEST_EP_STEPS,
-                      TEST_EPISODES, A_MAX, WEIGHT_DEC)
+                      TEST_EPISODES, A_MAX, WEIGHT_DEC,N_DIC)
 from torch.utils.tensorboard import SummaryWriter
 from buffers.PrioritizedReplayBuffer import PrioritizedReplayBuffer
 import time
@@ -21,7 +21,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class PRB_DDPG_Agent:
     def __init__(self, state_size=S_SIZE, action_size=A_SIZE, lr_actor=LR_A, lr_critic=LR_C, 
                  gamma=GAMMA, tau=TAU, buffer_size=BUFFER_SIZE, batch_size=BATCH_SIZE, alpha=ALPHA,
-                 weight_decay = WEIGHT_DEC, action_max=A_MAX):
+                 weight_decay = WEIGHT_DEC, action_max=A_MAX, n_dic=N_DIC):
         
         self.state_size = state_size
         self.action_size = action_size
@@ -37,113 +37,102 @@ class PRB_DDPG_Agent:
         comment = f"lr_actor={lr_actor}, lr_critic={lr_critic}, gamma={gamma}, tau={tau}, buffer_size={buffer_size}, batch_size={batch_size}"
         self.writer = SummaryWriter(comment=comment)
         self.global_step = 0
+        self.layers_critic = L_C1
         self.noise = Noise(self.action_size)
-        self.layers_critic_1 = L_C1
-        self.layers_critic_2 = L_C2
+        self.n_treshold =1
+        self.n_dic = n_dic
         
         self.actor = torch.compile(Actor(self.state_size, self.action_size)).to(device)
-        self.critic1 = torch.compile(Critic(self.state_size, self.action_size,layers=self.layers_critic_1, name="critic1")).to(device)
-        self.critic2 = torch.compile(Critic(self.state_size, self.action_size,layers=self.layers_critic_2, name="critic2")).to(device)
-        
+        self.critic = torch.compile(Critic(self.state_size, self.action_size,layers=self.layers_critic, name="critic")).to(device)
         self.actor_target = torch.compile(Actor(state_size, action_size,name="actor_target")).to(device)
-        self.critic1_target = torch.compile(Critic(self.state_size, self.action_size,layers=self.layers_critic_1,name="critic1_target")).to(device)
-        self.critic2_target = torch.compile(Critic(self.state_size, self.action_size,layers=self.layers_critic_2,name="critic2_target")).to(device)
-        
+        self.critic_target = torch.compile(Critic(self.state_size, self.action_size,layers=self.layers_critic,name="critic_target")).to(device)
         self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=self.lr_actor, weight_decay=self.weight_decay)
-        self.critic1_optimizer = optim.Adam(self.critic1.parameters(), lr=self.lr_critic, weight_decay=self.weight_decay)
-        self.critic2_optimizer = optim.Adam(self.critic2.parameters(), lr=self.lr_critic, weight_decay=self.weight_decay)  # Оптимизатор для второго критика
+        self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=self.lr_critic, weight_decay=self.weight_decay)
         
     def get_action(self,state):
-        state = torch.tensor(state, dtype=torch.float32).to(device)
-        action = self.actor(state).detach().cpu().numpy() + self.noise.sample()
-        return np.clip(a=action,a_min = -self.action_max, a_max = self.action_max)
-    
+        state = torch.FloatTensor(state).to(device)
+        action = self.actor(state).detach().cpu().numpy() 
+        action_n = action + self.noise.sample()*self.n_treshold
+        action = np.clip(a=action_n,a_min = -self.action_max, a_max = self.action_max)
+        return action
+      
+    def update_target_networks(self):
+        """Update the target networks."""
+        self.soft_update(self.actor  , self.actor_target, self.tau)
+        self.soft_update(self.critic, self.critic_target, self.tau)
+        
     def soft_update(self, source, target, tau):
         """Softly update target network parameters."""
         for target_param, param in zip(target.parameters(), source.parameters()):
             target_param.data.copy_(target_param.data * (1.0 - tau) + param.data * tau)
             
-    def update_target_networks(self):
-        """Update the target networks."""
-        self.soft_update(self.actor  , self.actor_target  , self.tau)
-        self.soft_update(self.critic1, self.critic1_target, self.tau)
-        self.soft_update(self.critic2, self.critic2_target, self.tau)
-    
     def update(self):
-        
         transitions, indices, weights = self.replay_buffer.sample(self.batch_size)
         if transitions is None:
             return
         
         states, actions, rewards, next_states, dones = zip(*transitions)
-        
-        states = torch.tensor(np.array(states), dtype=torch.float32).to(device)
-        actions = torch.tensor(np.array(actions), dtype=torch.float32).to(device)
-        next_states = torch.tensor(np.array(next_states), dtype=torch.float32).to(device)
-        rewards = torch.tensor(np.array(rewards), dtype=torch.float32).to(device)
-        dones = torch.tensor(np.array(dones), dtype=torch.float32).to(device)
-        weights = torch.tensor(np.array(weights), dtype=torch.float32).to(device)
-        
-        target_q_values=[]
+        states = torch.FloatTensor(states).to(device)
+        actions = torch.FloatTensor(actions).to(device)
+        next_states = torch.FloatTensor(next_states).to(device)
+        rewards = torch.FloatTensor(rewards).to(device)
+        rewards = rewards.reshape(self.batch_size,1)
+        dones = torch.FloatTensor(dones).to(device)
+        dones = dones.reshape(self.batch_size,1)
+        weights =  torch.FloatTensor(weights).to(device)
+        #print(f"a= {actions.size()}, s= {states.size()}, r= {rewards.size()}, sn= {next_states.size()}, done= {dones.size()} ")
         
         # Update Critic
-        next_q_values1 = self.critic1_target(next_states, actions)
-        next_q_values2 = self.critic2_target(next_states, actions)
-        for i in range(len(rewards)):
-            target_q_values.append(rewards[i] + self.gamma * (1 - dones[i]) * torch.min(next_q_values1, next_q_values2)[i])  # Усреднение ошибок
-        target_q_values = torch.tensor(target_q_values).to(device)
+        next_action = self.actor_target(next_states)
+        next_states_action = torch.cat((next_states,next_action), dim=1)
+        next_q_values = self.critic_target(next_states_action)
+        targets = rewards + (1-dones) * self.gamma * next_q_values
         
         # Calcualte error learn
-        critic1_loss = (weights * nn.MSELoss(reduction='none')(self.critic1(states, actions), target_q_values.detach().unsqueeze(1))).mean()
-        critic2_loss = (weights * nn.MSELoss(reduction='none')(self.critic2(states, actions), target_q_values.detach().unsqueeze(1))).mean()
-        self.critic1_optimizer.zero_grad()
-        self.critic2_optimizer.zero_grad()
-        critic1_loss.backward()
-        critic2_loss.backward()
-        self.critic1_optimizer.step()
-        self.critic2_optimizer.step()
+        states_actions = torch.cat((states, actions),dim=1).to(device)
+        critic_loss = torch.mean(weights *(targets.detach() - self.critic(states_actions))**2).to(device)
+        critic_loss.backward()
+        self.critic_optimizer.step()
+        self.critic_optimizer.zero_grad()
         
         # Update Actor
-        actors_1 = self.actor(states)
-        actor_loss = -(weights * self.critic1(states, actors_1)).mean()  # Используем первый критик для обновления актера
-        self.actor_optimizer.zero_grad()
+        actors_1 = self.actor(states).to(device)
+        states_actors_1 = torch.cat((states, actors_1),dim=1).to(device)
+        actor_loss = -torch.mean(weights * self.critic(states_actors_1)).to(device)  # Используем первый критик для обновления актера
         actor_loss.backward()
         self.actor_optimizer.step()
+        self.actor_optimizer.zero_grad()
         
+        self.update_target_networks()
         # Update Priorities
-        new_priorities = (critic1_loss.detach().cpu().numpy() + critic2_loss.detach().cpu().numpy() + 1e-5) / 2
+        new_priorities = (critic_loss.detach().cpu().numpy()  + 1e-5) / 2
         self.replay_buffer.update_priority(indices, new_priorities)
         
         # Update Target Networks
-        self.update_target_networks()
-        self.writer.add_scalar('Actor Loss'  , actor_loss.item()  , self.global_step)
-        self.writer.add_scalar('Critic1 Loss', critic1_loss.item(), self.global_step)
-        self.writer.add_scalar('Critic2 Loss', critic2_loss.item(), self.global_step)
+        
+        self.writer.add_scalar('Actor Loss'    , actor_loss.item()  , self.global_step)
+        self.writer.add_scalar('Critic Loss'   , critic_loss.item() , self.global_step)
         self.writer.add_scalar('Average Reward', torch.mean(rewards), self.global_step)
         self.global_step += 1
     
     def save_models(self):
         self.actor.save_checkpoint()
         self.actor_target.save_checkpoint()
-        self.critic1.save_checkpoint()
-        self.critic2.save_checkpoint()
-        self.critic1_target.save_checkpoint()
-        self.critic2_target.save_checkpoint()
+        self.critic.save_checkpoint()
+        self.critic_target.save_checkpoint()
 
     def load_models(self):
         self.actor.load_checkpoint()
         self.actor_target.load_checkpoint()
-        self.critic1.load_checkpoint()
-        self.critic2.load_checkpoint()
-        self.critic1_target.load_checkpoint()
-        self.critic1_target.load_checkpoint()
+        self.critic.load_checkpoint()
+        self.critic_target.load_checkpoint()
            
     def train(self, env, num_episodes=EPISODES, ep_steps=EP_STEPS):
         # Загрузка весов и моделей для продолжения обучения
-        if os.path.exists('/chekpoints/actor*') :
-        #     self.actor.load_state_dict(torch.load('actor_weights.pth'))
-        #     self.critic1.load_state_dict(torch.load('critic1_weights.pth'))
-        #     self.critic2.load_state_dict(torch.load('critic2_weights.pth'))
+        if os.path.exists('/chekpoints'):
+            if os.path.exists('actor_weights.pth'):
+                self.actor.load_state_dict(torch.load('actor_weights.pth'))
+                self.critic1.load_state_dict(torch.load('critic_weights.pth'))
             self.load_models()
         
         start_time = time.time()
@@ -155,8 +144,11 @@ class PRB_DDPG_Agent:
             episode_reward = 0
             env.set_number(episode)
             
-            # for _ in range(ep_steps):
-            while not done:
+            
+            for _ in range(ep_steps):
+            # while not done:
+                if done:
+                    break
                 action =self.get_action(state) 
                 next_state, reward, done, _ = env.step(action)
                 
@@ -168,19 +160,20 @@ class PRB_DDPG_Agent:
             episode_rewards.append(episode_reward)
             avg_reward = np.mean(episode_rewards[-100:])
             
-            print(f"Episode {episode+1}/{num_episodes}, Reward: {episode_reward:.2f}, Avg Reward: {avg_reward:.2f}")
+            print(f"Episode {episode+1}/{num_episodes}, Reward: {episode_reward:.2f}, Avg Reward: {avg_reward:.2f}, Target point {state[2]:.2f} , {state[3]:.2f}")
 
             if episode % 5 == 0:
                 # Save model
-                # torch.save(self.actor.state_dict()  , 'actor_weights.pth')
-                # torch.save(self.critic1.state_dict(), 'critic1_weights.pth')
-                # torch.save(self.critic2.state_dict(), 'critic2_weights.pth')
+                torch.save(self.actor.state_dict()  , 'actor_weights.pth')
+                torch.save(self.critic.state_dict(), 'critic_weights.pth')
                 self.save_models()
+                
+        if self.n_treshold>0:
+            self.n_treshold = max(0,self.n_treshold-self.n_dic)    
             
         # Сохранение весов и моделей 
-        # torch.save(self.actor.state_dict()  ,'actor_weights.pth')
-        # torch.save(self.critic1.state_dict(),  'critic1_weights.pth')
-        # torch.save(self.critic2.state_dict(),  'critic2_weights.pth')
+        torch.save(self.actor.state_dict()  ,'actor_weights.pth')
+        torch.save(self.critic.state_dict(),  'critic_weights.pth')
         self.save_models()
         
         self.writer.close()
@@ -199,9 +192,8 @@ class PRB_DDPG_Agent:
             max_steps (int): максимальное количество шагов в одном эпизоде
         """
         
-        # self.actor.load_state_dict(torch.load( 'actor_weights.pth'))
-        # self.critic1.load_state_dict(torch.load('critic1_weights.pth'))
-        # self.critic2.load_state_dict(torch.load( 'critic2_weights.pth'))
+        self.actor.load_state_dict(torch.load( 'actor_weights.pth'))
+        self.critic.load_state_dict(torch.load('critic_weights.pth'))
         self.load_models()
        
         rewards = []
@@ -220,6 +212,6 @@ class PRB_DDPG_Agent:
                 state = next_state
                 
             rewards.append(total_reward)
-            print(f"Episode {episode+1}, Reward: {total_reward:.2f}")
+            print(f"Episode {episode+1}, Reward: {total_reward:.2f}, Target point {state[2:3]}")
         
         print(f"Average reward: {np.mean(rewards):.2f}")
