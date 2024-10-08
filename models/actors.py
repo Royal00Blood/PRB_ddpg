@@ -30,7 +30,7 @@ class Actor(nn.Module):
         self.batch_norm_3 = nn.LayerNorm(layers[2])
         self.layer_4 = nn.Linear(layers[2], layers[3])
         self.batch_norm_4 = nn.LayerNorm(layers[3])
-        self.layer_5 = nn.Linear(layers[2], action_size)
+        self.layer_5 = nn.Linear(layers[3], action_size)
          
         # init weights
         self.reset_weights()
