@@ -10,7 +10,7 @@ TAU   = 0.01 # 0.001 to 0.01
 LR_A = 0.0001 # 0.0001 to 0.001
 LR_C = 0.001 # 0.001 to 0.01
 
-WEIGHT_DEC = 0.0001 # 0.0001 0.01
+WEIGHT_DEC = 0.001 # 0.0001 0.01
 REWARD = 500
 # Параметры среды
 S_SIZE  = 5
@@ -28,12 +28,12 @@ AREA_GENERATION = AREA_DEFEAT - 0.4
 TIME = 0.1
 
 # Параметры обучения
-EPISODES = 1500
-EP_STEPS = 150
+EPISODES = 20000
+EP_STEPS = 200
 
 #  Параметры проверки
 TEST_EPISODES = 100
-TEST_EP_STEPS = 150
+TEST_EP_STEPS = 200
 
 # Параметры моделей
 SEED = 200
