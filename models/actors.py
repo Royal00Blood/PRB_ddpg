@@ -46,11 +46,11 @@ class Actor(nn.Module):
         
     def forward(self, state):
         x = self.layer_1(state)
-        x = F.leaky_relu(self.batch_norm_1(x))
+        x = F.relu(self.batch_norm_1(x))
         x = self.layer_2(x)
-        x = F.leaky_relu(self.batch_norm_2(x))
+        x = F.relu(self.batch_norm_2(x))
         x = self.layer_3(x)
-        x = F.leaky_relu(self.batch_norm_3(x))
+        x = F.relu(self.batch_norm_3(x))
         x = self.layer_4(x)
         x = F.relu(self.batch_norm_4(x))
         action = F.tanh(self.layer_5(x))* self.action_max
