@@ -29,11 +29,11 @@ TIME = 0.1
 
 # Параметры обучения
 EPISODES = 1500
-EP_STEPS = 200
+EP_STEPS = 150
 
 #  Параметры проверки
 TEST_EPISODES = 100
-TEST_EP_STEPS = 300
+TEST_EP_STEPS = 150
 
 # Параметры моделей
 SEED = 200
