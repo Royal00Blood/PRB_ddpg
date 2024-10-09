@@ -39,7 +39,6 @@ class RobotEnv(EnvBase):
     def __init__(self, td_params=None, seed=None, device="cpu"):
         if td_params is None:
             td_params = self.gen_params()
-
         super().__init__(device=device, batch_size=[])
         self._make_spec(td_params)
         if seed is None:
@@ -72,9 +71,10 @@ class RobotEnv(EnvBase):
         reward_target = 0
         
         new_angle = angle + (action[1] * dt) 
+        
         new_x_robot = x_robot + action[0] * np.cos(new_angle) * dt
         new_y_robot = y_robot + action[0] * np.sin(new_angle) * dt
-        
+        print(f"xr = {new_x_robot.size()}, yr = {new_y_robot.size()},angle = {new_angle.size()} ")
         if( - AREA_DEFEAT > x_robot or x_robot > AREA_DEFEAT  or
             - AREA_DEFEAT > y_robot or y_robot > AREA_DEFEAT):
             done = True
@@ -100,13 +100,13 @@ class RobotEnv(EnvBase):
             # награда за изменение растояния
             dist_reward = dist_old - dist_new
             # angle
-            delta_angle = d_ang(x_robot, y_robot, x_target, y_target, new_angle).get_angle_dev()
+            delta_angle = d_ang(x_robot.numpy(), y_robot.numpy(), x_target.numpy(), y_target.numpy(), new_angle.numpy()).get_angle_dev()
+            delta_angle = torch.tensor(delta_angle)
             angle_reward = -abs(delta_angle)
             reward_target = dist_reward + angle_reward
-         
+            done = False
             
         reward = reward_target.view(*tensordict.shape, 1)    
-        done = torch.zeros_like(reward, dtype=torch.bool)
         out = TensorDict(
             {
                 "xr":    new_x_robot, 
@@ -161,9 +161,6 @@ class RobotEnv(EnvBase):
             xt=Bounded(low=-CORD_RANGE,high=CORD_RANGE,shape=(1,),dtype=torch.float32),
             yt=Bounded(low=-CORD_RANGE,high=CORD_RANGE,shape=(1,),dtype=torch.float32),
             angle = Bounded(low=-ANGL_RANGE,high=ANGL_RANGE,shape=(1,),dtype=torch.float32),
-            
-           # action = Bounded(low=-td_params["params", "max_a"],high=td_params["params", "max_a"],shape=(2,),dtype=torch.float32),
-         
             params=self.make_composite_from_td(td_params["params"]),
             shape=(),
         )
