@@ -45,4 +45,4 @@ L_C1 = [300, 250, 200]
 
 
 DIR_CHEKPOINT = "C:/Users/Ivan/Documents/python_github/PRB_ddpg/chekpoints"
-N_DIC = 1/ EPISODES* EP_STEPS
+N_DIC = 1 / (EPISODES * EP_STEPS)

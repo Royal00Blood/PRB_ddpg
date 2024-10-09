@@ -49,8 +49,6 @@ class PrioritizedReplayBuffer:
             if 0 <= index < self.capacity:
                 self.priorities[index] = priority
 
-        
-
     def __len__(self):
         return len(self.buffer)
     

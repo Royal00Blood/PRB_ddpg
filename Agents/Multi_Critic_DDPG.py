@@ -102,13 +102,11 @@ class PRB_DDPG_Agent:
         actor_loss.backward()
         self.actor_optimizer.step()
         self.actor_optimizer.zero_grad()
-        
+        ##
         self.update_target_networks()
         # Update Priorities
         new_priorities = (critic_loss.detach().cpu().numpy()  + 1e-5) / 2
         self.replay_buffer.update_priority(indices, new_priorities)
-        
-        # Update Target Networks
         
         self.writer.add_scalar('Actor Loss'    , actor_loss.item()  , self.global_step)
         self.writer.add_scalar('Critic Loss'   , critic_loss.item() , self.global_step)
