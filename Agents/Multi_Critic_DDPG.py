@@ -35,7 +35,6 @@ class PRB_DDPG_Agent:
         self.weight_decay = weight_decay
         self.replay_buffer = PrioritizedReplayBuffer(buffer_size, alpha)
         comment = f"lr_actor={lr_actor}, lr_critic={lr_critic}, gamma={gamma}, tau={tau}, buffer_size={buffer_size}, batch_size={batch_size}"
-        comment = comment + input(" Введите особенность обучения: ")
         self.writer = SummaryWriter(comment=comment)
         self.global_step = 0
         self.layers_critic = L_C1
