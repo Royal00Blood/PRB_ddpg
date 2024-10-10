@@ -15,9 +15,6 @@ from buffers.PrioritizedReplayBuffer import PrioritizedReplayBuffer
 import time
 import torch.nn.functional as F
 from noise import Noise
-from collections import deque 
-from copy import deepcopy
-import random
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # path = "C:\Users\Ivan\Documents\python_github\PRB_ddpg\Agents\models_save"
 
@@ -44,7 +41,6 @@ class PRB_DDPG_Agent:
         self.noise = Noise(self.action_size)
         self.n_treshold =1
         self.n_dic = n_dic
-        self.memory = deque(maxlen=self.buffer_size)
         
         self.actor = torch.compile(Actor(self.state_size, self.action_size)).to(device)
         self.critic = torch.compile(Critic(self.state_size, self.action_size,layers=self.layers_critic, name="critic")).to(device)
@@ -71,13 +67,11 @@ class PRB_DDPG_Agent:
             target_param.data.copy_(target_param.data * (1.0 - tau) + param.data * tau)
             
     def update(self):
-        # transitions, indices, weights = self.replay_buffer.sample(self.batch_size)
-        # if transitions is None:
-        #     return
-        batch =random.sample(self.memory, self.batch_size)
-        # states, actions, rewards, next_states, dones = zip(*transitions)
-        states, actions, rewards, next_states, dones = zip(*batch)
+        transitions, indices, weights = self.replay_buffer.sample(self.batch_size)
+        if transitions is None:
+            return
         
+        states, actions, rewards, next_states, dones = zip(*transitions)
         states = torch.FloatTensor(states).to(device)
         actions = torch.FloatTensor(actions).to(device)
         next_states = torch.FloatTensor(next_states).to(device)
@@ -85,7 +79,7 @@ class PRB_DDPG_Agent:
         rewards = rewards.reshape(self.batch_size,1)
         dones = torch.FloatTensor(dones).to(device)
         dones = dones.reshape(self.batch_size,1)
-        # weights =  torch.FloatTensor(weights).to(device)
+        weights =  torch.FloatTensor(weights).to(device)
         #print(f"a= {actions.size()}, s= {states.size()}, r= {rewards.size()}, sn= {next_states.size()}, done= {dones.size()} ")
         
         # Update Critic
@@ -96,8 +90,7 @@ class PRB_DDPG_Agent:
         
         # Calcualte error learn
         states_actions = torch.cat((states, actions),dim=1).to(device)
-        # critic_loss = torch.mean(weights *(targets.detach() - self.critic(states_actions))**2).to(device)
-        critic_loss = torch.mean((targets.detach() - self.critic(states_actions))**2).to(device)
+        critic_loss = torch.mean(weights *(targets.detach() - self.critic(states_actions))**2).to(device)
         critic_loss.backward()
         self.critic_optimizer.step()
         self.critic_optimizer.zero_grad()
@@ -105,16 +98,15 @@ class PRB_DDPG_Agent:
         # Update Actor
         actors_1 = self.actor(states).to(device)
         states_actors_1 = torch.cat((states, actors_1),dim=1).to(device)
-        # actor_loss = -torch.mean(weights * self.critic(states_actors_1)).to(device)  # Используем первый критик для обновления актера
-        actor_loss = -torch.mean(self.critic(states_actors_1)).to(device)
+        actor_loss = -torch.mean(weights * self.critic(states_actors_1)).to(device)  # Используем первый критик для обновления актера
         actor_loss.backward()
         self.actor_optimizer.step()
         self.actor_optimizer.zero_grad()
         ##
         self.update_target_networks()
         # Update Priorities
-        # new_priorities = (critic_loss.detach().cpu().numpy()  + 1e-5) / 2
-        # self.replay_buffer.update_priority(indices, new_priorities)
+        new_priorities = (critic_loss.detach().cpu().numpy()  + 1e-5) / 2
+        self.replay_buffer.update_priority(indices, new_priorities)
         
         self.writer.add_scalar('Actor Loss'    , actor_loss.item()  , self.global_step)
         self.writer.add_scalar('Critic Loss'   , critic_loss.item() , self.global_step)
@@ -157,13 +149,11 @@ class PRB_DDPG_Agent:
                     break
                 action =self.get_action(state) 
                 next_state, reward, done, _ = env.step(action)
-                self.memory.append(state, action, reward, next_state, done)
-                # self.replay_buffer.push(state, action, reward, next_state, done)
                 
-                # if len(self.replay_buffer) > self.batch_size:# Добавить обновление в случае кратности шага после проверки а размер буфера
-                #     self.update()
-                if len(self.memory) > self.batch_size:
-                    self.update()    
+                self.replay_buffer.push(state, action, reward, next_state, done)
+                
+                if len(self.replay_buffer) > self.batch_size:# Добавить обновление в случае кратности шага после проверки а размер буфера
+                    self.update()
                     
                 state = next_state
                 episode_reward += reward
