@@ -85,7 +85,7 @@ class PRB_DDPG_Agent:
         rewards = rewards.reshape(self.batch_size,1)
         dones = torch.FloatTensor(dones).to(device)
         dones = dones.reshape(self.batch_size,1)
-        weights =  torch.FloatTensor(weights).to(device)
+        # weights =  torch.FloatTensor(weights).to(device)
         #print(f"a= {actions.size()}, s= {states.size()}, r= {rewards.size()}, sn= {next_states.size()}, done= {dones.size()} ")
         
         # Update Critic
@@ -96,7 +96,8 @@ class PRB_DDPG_Agent:
         
         # Calcualte error learn
         states_actions = torch.cat((states, actions),dim=1).to(device)
-        critic_loss = torch.mean(weights *(targets.detach() - self.critic(states_actions))**2).to(device)
+        # critic_loss = torch.mean(weights *(targets.detach() - self.critic(states_actions))**2).to(device)
+        critic_loss = torch.mean((targets.detach() - self.critic(states_actions))**2).to(device)
         critic_loss.backward()
         self.critic_optimizer.step()
         self.critic_optimizer.zero_grad()
@@ -104,7 +105,8 @@ class PRB_DDPG_Agent:
         # Update Actor
         actors_1 = self.actor(states).to(device)
         states_actors_1 = torch.cat((states, actors_1),dim=1).to(device)
-        actor_loss = -torch.mean(weights * self.critic(states_actors_1)).to(device)  # Используем первый критик для обновления актера
+        # actor_loss = -torch.mean(weights * self.critic(states_actors_1)).to(device)  # Используем первый критик для обновления актера
+        actor_loss = -torch.mean(self.critic(states_actors_1)).to(device)
         actor_loss.backward()
         self.actor_optimizer.step()
         self.actor_optimizer.zero_grad()
