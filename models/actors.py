@@ -17,8 +17,8 @@ class Actor(nn.Module):
     def __init__(self, state_size=S_SIZE, action_size=A_SIZE, seed=SEED, action_max = A_MAX, 
                  layers=L_A, dir_chekpoint=DIR_CHEKPOINT, name = 'chekpoint_actor' ):
         super(Actor, self).__init__()
-        self.tanh = F.tanh()
-        self.relu = F.relu()
+        self.tanh = nn.Tanh()
+        self.relu = nn.ReLU()
         self.chekpoint = os.path.join(dir_chekpoint, name)
         self.seed = torch.manual_seed(seed)
         self.action_max = action_max
