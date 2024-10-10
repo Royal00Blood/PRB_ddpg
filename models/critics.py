@@ -29,9 +29,9 @@ class Critic(nn.Module):
             nn.init.constant_(layer.bias, 0.1)
         
     def forward(self, state_action ):
-        layer_1 = F.relu(self.batch_norm_1(self.layer_1(state_action)))
-        layer_2 = F.relu(self.batch_norm_2(self.layer_2(layer_1)))
-        layer_3 = F.relu(self.batch_norm_3(self.layer_3(layer_2)))
+        layer_1 = F.relu(self.layer_1(state_action))
+        layer_2 = F.relu(self.layer_2(layer_1))
+        layer_3 = F.relu(self.layer_3(layer_2))
         q_val = self.q(layer_3)
         return q_val 
     
