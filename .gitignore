@@ -4,7 +4,7 @@
 /chekpoints
 **/__pycache__
 __init__.py
-__pycache__/*
+
 *.pth
 
 # Editor files
