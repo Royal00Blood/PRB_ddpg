@@ -54,9 +54,9 @@ class Actor(nn.Module):
     #     return action
     
     def forward(self, state):
-        x = F.relu(self.layer_1(state))
-        x = F.relu(self.layer_2(x))
-        action = F.tanh(self.layer_3(x))* self.action_max
+        x = self.relu(self.layer_1(state))
+        x = self.relu(self.layer_2(x))
+        action = self.tanh(self.layer_3(x))* self.action_max
         return action
 
     def save_checkpoint(self):
