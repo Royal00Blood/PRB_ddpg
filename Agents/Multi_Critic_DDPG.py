@@ -143,7 +143,7 @@ class PRB_DDPG_Agent:
             env.set_number(episode)
             
             
-            for _ in range(ep_steps):
+            for _ in range(ep_steps):# попробовать обучить при while
             # while not done:
                 if done:
                     break
@@ -151,8 +151,10 @@ class PRB_DDPG_Agent:
                 next_state, reward, done, _ = env.step(action)
                 
                 self.replay_buffer.push(state, action, reward, next_state, done)
-                if len(self.replay_buffer) > self.batch_size:
+                
+                if len(self.replay_buffer) > self.batch_size:# Добавить обновление в случае кратности шага после проверки а размер буфера
                     self.update()
+                    
                 state = next_state
                 episode_reward += reward
             episode_rewards.append(episode_reward)
@@ -199,7 +201,9 @@ class PRB_DDPG_Agent:
         for episode in range(max_episodes):
             state = env.reset_env()
             total_reward = 0
-            for step in range(max_steps):
+            done = False
+            for st in range(max_steps):
+            #while(not done):
                 # Выбираем действие на основе текущего состояния
                 action = self.get_action(state)
                 # Применяем действие в среде и получаем новое состояние, награду и флаг завершения
@@ -210,6 +214,6 @@ class PRB_DDPG_Agent:
                 state = next_state
                 
             rewards.append(total_reward)
-            print(f"Episode {episode+1}, Reward: {total_reward:.2f}, Target point {state[2:3]}")
+            print(f"Episode {episode+1}, Reward: {total_reward:.2f}, Target point {state[1:3]:.2f}")
         
         print(f"Average reward: {np.mean(rewards):.2f}")
