@@ -80,7 +80,6 @@ class PRB_DDPG_Agent:
         dones = torch.FloatTensor(dones).to(device)
         dones = dones.reshape(self.batch_size,1)
         weights =  torch.FloatTensor(weights).to(device)
-        #print(f"a= {actions.size()}, s= {states.size()}, r= {rewards.size()}, sn= {next_states.size()}, done= {dones.size()} ")
         
         # Update Critic
         next_action = self.actor_target(next_states)

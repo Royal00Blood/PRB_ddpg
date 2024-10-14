@@ -45,14 +45,6 @@ class Actor(nn.Module):
         # Инициализация выходного слоя
         self.layer_3.weight.data.uniform_(-0.1, 0.1)
         
-    # def forward(self, state):
-    #     x = self.layer_1(state)
-    #     x = F.relu(self.batch_norm_1(x))
-    #     x = self.layer_2(x)
-    #     x = F.relu(self.batch_norm_2(x))
-    #     action = F.tanh(self.layer_5(x))* self.action_max
-    #     return action
-    
     def forward(self, state):
         x = self.relu(self.layer_1(state))
         x = self.relu(self.layer_2(x))

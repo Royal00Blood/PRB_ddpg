@@ -75,7 +75,7 @@ class CustomEnv(gym.Env):
             self.__old_target_point = [self.__target_point[0], self.__target_point[1]]
             self.__old_position_robot = [self.__position_robot[0], self.__position_robot[1]]
             
-            return self.__dist_reward() + self.__angle_reward()
+            return self.__dist_reward()# + self.__angle_reward()
                        
     def __dist_reward(self):
         dist_new = d_dist(self.__target_point[0], self.__target_point[1], self.__position_robot[0], self.__position_robot[1]).getDistance()
