@@ -1,6 +1,6 @@
 import numpy as np
 from settings import (S_SIZE, A_SIZE, A_MAX, S_MAX, AREA_DEFEAT, 
-                      AREA_WIN, AREA_GENERATION, TIME, S_G_TARG, REWARD)
+                      AREA_WIN, AREA_GENERATION, TIME, S_G_TARG, REWARD, EP_STEPS)
 import gym
 import random
 from calculation_scripts.DistanceBW2points import DistanceBW2points as d_dist
@@ -35,7 +35,6 @@ class CustomEnv(gym.Env):
         
         self.__d_angl_rad = 0.0
         self.__delta_angle = 0.0
-        self.__delta_angle_old = 0.0
         
     def step(self, action):
         # Применяем действие к состоянию и получаем новое состояние
@@ -74,7 +73,7 @@ class CustomEnv(gym.Env):
             else:
                 return -REWARD
         else:
-            return self.__dist_reward() + self.__angle_reward()
+            return self.__dist_reward() + self.__angle_reward() - self.__number/EP_STEPS
                        
     def __dist_reward(self):
         dist_new = d_dist(self.__target_point[0], self.__target_point[1], self.__position_robot[0], self.__position_robot[1]).getDistance()

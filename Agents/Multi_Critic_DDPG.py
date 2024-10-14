@@ -16,7 +16,6 @@ import time
 import torch.nn.functional as F
 from noise import Noise
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-# path = "C:\Users\Ivan\Documents\python_github\PRB_ddpg\Agents\models_save"
 
 class PRB_DDPG_Agent:
     def __init__(self, state_size=S_SIZE, action_size=A_SIZE, lr_actor=LR_A, lr_critic=LR_C, 
