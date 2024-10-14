@@ -30,7 +30,13 @@ class Actor(nn.Module):
         self.layer_2 = nn.Linear(layers[0], layers[1])
         self.batch_norm_2 = nn.LayerNorm(layers[1])
         
-        self.layer_3 = nn.Linear(layers[1], action_size)
+        self.layer_3 = nn.Linear(layers[1], layers[2])
+        self.batch_norm_3 = nn.LayerNorm(layers[2])
+        
+        self.layer_4 = nn.Linear(layers[2], layers[3])
+        self.batch_norm_4 = nn.LayerNorm(layers[3])
+        
+        self.layer_5 = nn.Linear(layers[3], action_size)
          
         # init weights
         self.reset_weights()
@@ -38,17 +44,19 @@ class Actor(nn.Module):
     def reset_weights(self):
         
         # Инициализация весов для слоев
-        for layer in [self.layer_1, self.layer_2]:
+        for layer in [self.layer_1, self.layer_2, self.layer_3, self.layer_4]:
             nn.init.kaiming_uniform_(layer.weight, a=0, mode='fan_in', nonlinearity='relu')
             nn.init.constant_(layer.bias, 0.1)
             
         # Инициализация выходного слоя
-        self.layer_3.weight.data.uniform_(-0.1, 0.1)
+        self.layer_5.weight.data.uniform_(-0.1, 0.1)
         
     def forward(self, state):
         x = self.relu(self.layer_1(state))
         x = self.relu(self.layer_2(x))
-        action = self.tanh(self.layer_3(x))* self.action_max
+        x = self.relu(self.layer_3(x))
+        x = self.relu(self.layer_4(x))
+        action = self.tanh(self.layer_5(x))* self.action_max
         return action
 
     def save_checkpoint(self):
