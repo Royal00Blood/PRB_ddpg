@@ -7,6 +7,14 @@ import torch._dynamo
 torch._dynamo.config.suppress_errors = True
 
 env = env_learn()
-agent = Agent()
-agent.train(env)            
-agent.test(env,max_episodes=TEST_EPISODES,max_steps=TEST_EP_STEPS)
+
+a=0.0001
+c=0.001
+for i in range(10):
+    a+=0.0001
+    for k in range (10):
+        c += 0.001
+        agent = Agent( lr_actor=a, lr_critic=k)
+        agent.train(env,num_episodes=200, ep_steps=100)    
+                
+#agent.test(env,max_episodes=TEST_EPISODES,max_steps=TEST_EP_STEPS)
