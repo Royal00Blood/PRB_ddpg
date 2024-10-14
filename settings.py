@@ -5,13 +5,13 @@ ALPHA = 0.7
 
 # Гиперпараметры
 GAMMA = 0.99   # 0.9 to 0.999
-TAU   = 0.005  # 0.001 to 0.01
+TAU   = 0.001  # 0.001 to 0.01
 
 LR_A = 0.0001  # 0.0001 to 0.001
 LR_C = 0.001   # 0.001 to 0.01
 
 WEIGHT_DEC = 0.005 # 0.0001 0.01
-REWARD = 500
+REWARD = 400
 # Параметры среды
 S_SIZE  = 5
 A_SIZE = 2
@@ -28,12 +28,12 @@ AREA_GENERATION = AREA_DEFEAT - S_G_TARG
 TIME = 0.1
 
 # Параметры обучения
-EPISODES = 250
-EP_STEPS = 10
+EPISODES = 25000
+EP_STEPS = 250
 
 #  Параметры проверки
 TEST_EPISODES = 100
-TEST_EP_STEPS = 100
+TEST_EP_STEPS = 200
 
 # Параметры моделей
 SEED = 0

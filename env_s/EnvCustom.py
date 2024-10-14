@@ -74,7 +74,7 @@ class CustomEnv(gym.Env):
             else:
                 return -REWARD
         else:
-            return self.__dist_reward()# + self.__angle_reward()
+            return self.__dist_reward() + self.__angle_reward()
                        
     def __dist_reward(self):
         dist_new = d_dist(self.__target_point[0], self.__target_point[1], self.__position_robot[0], self.__position_robot[1]).getDistance()
