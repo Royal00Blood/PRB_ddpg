@@ -31,7 +31,7 @@ class CustomEnv(gym.Env):
         #                       random.choice([random.uniform(S_G_TARG, AREA_GENERATION), random.uniform(-AREA_GENERATION,-S_G_TARG)])]
         self.__target_point =[random.uniform(S_G_TARG, AREA_GENERATION), random.uniform(S_G_TARG, AREA_GENERATION)]    
         self.__old_target_point = self.__target_point
-        self.__old_position_robot = 0.0
+        self.__old_position_robot = [0,0]
         
         self.__d_angl_rad = 0.0
         self.__delta_angle = 0.0
@@ -50,9 +50,11 @@ class CustomEnv(gym.Env):
     def __calculate_state(self,action):
         # action [v, w]
         self.__d_angl_rad += (action[1] * TIME)  # изменение угла в радианах
+        
         # The position of the robot [x, y]
         self.__position_robot[0] += action[0] * np.cos(self.__d_angl_rad) * TIME
         self.__position_robot[1] += action[0] * np.sin(self.__d_angl_rad) * TIME
+        
         # Quaternions [Qx, Qy, Qz, Qw]
         self.__robot_quat[0] = 0.0
         self.__robot_quat[1] = 0.0
@@ -72,9 +74,6 @@ class CustomEnv(gym.Env):
             else:
                 return -REWARD
         else:
-            self.__old_target_point = [self.__target_point[0], self.__target_point[1]]
-            self.__old_position_robot = [self.__position_robot[0], self.__position_robot[1]]
-            
             return self.__dist_reward()# + self.__angle_reward()
                        
     def __dist_reward(self):
@@ -82,6 +81,7 @@ class CustomEnv(gym.Env):
         dist_old = d_dist(self.__old_target_point[0], self.__old_target_point[1], self.__old_position_robot[0], self.__old_position_robot[1]).getDistance()
         self.__old_target_point = [self.__target_point[0], self.__target_point[1]]
         self.__old_position_robot = [self.__position_robot[0], self.__position_robot[1]]
+        print(dist_old - dist_new )
         return dist_old - dist_new 
            
     def __angle_reward(self):
