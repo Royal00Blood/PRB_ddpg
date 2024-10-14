@@ -127,11 +127,14 @@ class PRB_DDPG_Agent:
     def train(self, env, num_episodes=EPISODES, ep_steps=EP_STEPS):
         # Загрузка весов и моделей для продолжения обучения
         if os.path.exists('/chekpoints'):
-            if os.path.exists('actor_weights.pth'):
-                self.actor.load_state_dict(torch.load('actor_weights.pth'))
-                self.critic1.load_state_dict(torch.load('critic_weights.pth'))
             self.load_models()
-        
+            
+        if os.path.exists('actor_weights.pth') and os.path.exists('critic_weights.pth') and os.path.exists('actor_target_weights.pth'):
+                self.actor.load_state_dict(torch.load('actor_weights.pth', weights_only=True))
+                self.critic.load_state_dict(torch.load('critic_weights.pth', weights_only=True))
+                self.actor_target.load_state_dict(torch.load('actor_target_weights.pth', weights_only=True))
+                self.critic_target.load_state_dict(torch.load('critic_target_weights.pth', weights_only=True))
+                
         start_time = time.time()
         episode_rewards = []
         
@@ -165,6 +168,8 @@ class PRB_DDPG_Agent:
                 # Save model
                 torch.save(self.actor.state_dict()  , 'actor_weights.pth')
                 torch.save(self.critic.state_dict(), 'critic_weights.pth')
+                torch.save(self.actor_target.state_dict()  , 'actor_target_weights.pth')
+                torch.save(self.critic_target.state_dict(), 'critic_target_weights.pth')
                 self.save_models()
                 
         if self.n_treshold>0:
@@ -173,6 +178,8 @@ class PRB_DDPG_Agent:
         # Сохранение весов и моделей 
         torch.save(self.actor.state_dict()  ,'actor_weights.pth')
         torch.save(self.critic.state_dict(),  'critic_weights.pth')
+        torch.save(self.actor_target.state_dict()  , 'actor_target_weights.pth')
+        torch.save(self.critic_target.state_dict(), 'critic_target_weights.pth')
         self.save_models()
         
         self.writer.close()
@@ -191,8 +198,10 @@ class PRB_DDPG_Agent:
             max_steps (int): максимальное количество шагов в одном эпизоде
         """
         
-        self.actor.load_state_dict(torch.load( 'actor_weights.pth'))
-        self.critic.load_state_dict(torch.load('critic_weights.pth'))
+        self.actor.load_state_dict(torch.load('actor_weights.pth', weights_only=True))
+        self.critic.load_state_dict(torch.load('critic_weights.pth', weights_only=True))
+        self.actor_target.load_state_dict(torch.load('actor_target_weights.pth', weights_only=True))
+        self.critic_target.load_state_dict(torch.load('critic_target_weights.pth', weights_only=True))
         self.load_models()
        
         rewards = []
@@ -213,6 +222,6 @@ class PRB_DDPG_Agent:
                 state = next_state
                 
             rewards.append(total_reward)
-            print(f"Episode {episode+1}, Reward: {total_reward:.2f}, Target point {state[1:3]:.2f}")
+            print(f"Episode {episode+1}, Reward: {total_reward:.2f}")
         
         print(f"Average reward: {np.mean(rewards):.2f}")
