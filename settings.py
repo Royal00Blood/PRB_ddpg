@@ -11,7 +11,7 @@ LR_A = 0.0001  # 0.0001 to 0.001
 LR_C = 0.001   # 0.001 to 0.01
 
 WEIGHT_DEC = 0.005 # 0.0001 0.01
-REWARD = 400
+
 # Параметры среды
 S_SIZE  = 5
 A_SIZE = 2
@@ -36,7 +36,8 @@ TEST_EPISODES = 100
 TEST_EP_STEPS = 200
 
 # Параметры моделей
-SEED = 0
+SEED = 10
+REWARD = EP_STEPS * 3
 
 # Кол нейронов в слоях
     #[ly1, ly2, ly3(v/w), ly4(v/w), ly5(v/w)] 
