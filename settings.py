@@ -1,7 +1,7 @@
 # Буфер-параметры
 BUFFER_SIZE = 1000000 # от 10000 до 1000000
 BATCH_SIZE  = 100     # 32 to 256
-ALPHA = 0.7
+ALPHA = 0.65
 
 # Гиперпараметры
 GAMMA = 0.99   # 0.9 to 0.999
@@ -28,7 +28,7 @@ AREA_GENERATION = AREA_DEFEAT - S_G_TARG
 TIME = 0.1
 
 # Параметры обучения
-EPISODES = 2500
+EPISODES = 200
 EP_STEPS = 250
 
 #  Параметры проверки
@@ -41,8 +41,8 @@ REWARD = EP_STEPS * 3
 
 # Кол нейронов в слоях
     #[ly1, ly2, ly3(v/w), ly4(v/w), ly5(v/w)] 
-L_A  = [512, 400, 350, 250]
-L_C1 = [400, 300, 200]
+L_A  = [512, 450, 400, 350]
+L_C1 = [500, 400, 300]
 
 
 DIR_CHEKPOINT = "C:/Users/Ivan/Documents/python_github/PRB_ddpg/chekpoints"
