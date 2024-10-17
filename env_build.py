@@ -30,11 +30,6 @@ ANGL_RANGE = 3.14
                                                    
 
 class RobotEnv(EnvBase):
-    metadata = {
-        "render_modes": ["human", "rgb_array"],
-        "render_fps": 30,
-    }
-    batch_locked = False
     
     def __init__(self, td_params=None, seed=None, device="cpu"):
         if td_params is None:
@@ -44,13 +39,12 @@ class RobotEnv(EnvBase):
         if seed is None:
             seed = torch.empty((), dtype=torch.int64).random_().item()
         self.set_seed(seed)
-        self.old_x_robot = 0
-        self.old_y_robot = 0
-        self.old_x_target = 0 
-        self.old_y_target = 0
+        
+        # self.old_x_robot  = torch.zeros(1)
+        # self.old_y_robot  = torch.zeros(1)
+        # self.old_x_target = torch.zeros(1) 
+        # self.old_y_target = torch.zeros(1)
 
-       
-    
     def _step(self, tensordict):
         # даные состояния среды
         # координаты робота
@@ -61,6 +55,11 @@ class RobotEnv(EnvBase):
         y_target = tensordict["yt"]
         # угол робота
         angle = tensordict["angle"]
+        #
+        old_x_robot  = tensordict["old_xr"]
+        old_y_robot  = tensordict["old_yr"]
+        old_x_target = tensordict["old_xt"]
+        old_y_target = tensordict["old_yt"]
 
         action = tensordict["action"].squeeze(-1) # линейая скорость робота
         # Котанты
@@ -74,29 +73,29 @@ class RobotEnv(EnvBase):
         
         new_x_robot = x_robot + action[0] * np.cos(new_angle) * dt
         new_y_robot = y_robot + action[0] * np.sin(new_angle) * dt
-        print(f"xr = {new_x_robot.size()}, yr = {new_y_robot.size()},angle = {new_angle.size()} ")
+        # print(f"xr = {new_x_robot.size()}, yr = {new_y_robot.size()},angle = {new_angle.size()} ")
         if( - AREA_DEFEAT > x_robot or x_robot > AREA_DEFEAT  or
             - AREA_DEFEAT > y_robot or y_robot > AREA_DEFEAT):
-            done = True
+            done = torch.tensor(True)
             reward_target = -REWARD
         elif ( x_target + AREA_WIN > x_robot > x_target - AREA_WIN   and
                 y_target + AREA_WIN > y_robot > y_target - AREA_WIN):
-            done = True
+            done = torch.tensor(True)
             reward_target = REWARD
         else:
             # dist
             # координаты цели
-            if self.old_x_target==0:
-                self.old_x_target = x_target
-                self.old_y_target = y_target
+            if old_x_target==0:
+                old_x_target = x_target
+                old_y_target = y_target
             dist_new = d_dist(x_target, y_target, x_robot, y_robot).getDistance()
-            dist_old = d_dist(self.old_x_target, self.old_y_target, self.old_x_robot, self.old_y_robot).getDistance()
+            dist_old = d_dist(old_x_target, old_y_target, old_x_robot, old_y_robot).getDistance()
             # координаты робота
-            self.old_x_robot = x_robot
-            self.old_y_robot = y_robot  
+            old_x_robot = x_robot
+            old_y_robot = y_robot  
             # координаты цели
-            self.old_x_target = x_target
-            self.old_y_target = y_target
+            old_x_target = x_target
+            old_y_target = y_target
             # награда за изменение растояния
             dist_reward = dist_old - dist_new
             # angle
@@ -104,16 +103,21 @@ class RobotEnv(EnvBase):
             delta_angle = torch.tensor(delta_angle)
             angle_reward = -abs(delta_angle)
             reward_target = dist_reward + angle_reward
-            done = False
+            reward = torch.tensor(reward_target).view(*tensordict.shape, 1)
+            done = torch.tensor(False)
             
-        reward = reward_target.view(*tensordict.shape, 1)    
+        # reward = reward_target.view(*tensordict.shape, 1)    
         out = TensorDict(
             {
-                "xr":    new_x_robot, 
-                "yr":    new_y_robot,
-                "xt":    x_target,
-                "yt":    y_target,
+                "xr": torch.tensor(new_x_robot), 
+                "yr": torch.tensor(new_y_robot),
+                "xt": torch.tensor(x_target),
+                "yt": torch.tensor(y_target),
                 "angle": new_angle,
+                "old_xr": old_x_robot,
+                "old_yr": old_y_robot,
+                "old_xt": old_x_target,
+                "old_yt": old_y_target,
                 "params": tensordict["params"],
                 "reward": reward,
                 "done": done,
@@ -123,9 +127,12 @@ class RobotEnv(EnvBase):
         return out
 
     def _reset(self, tensordict):
-        if tensordict is None or tensordict.is_empty():
+        print(f"tensordict: {tensordict}")
+        if (tensordict is None) or tensordict.is_empty():
             tensordict = self.gen_params(batch_size=self.batch_size)
 
+        
+        
         high_xt = torch.tensor(AREA_GENERATION, device=self.device)
         high_yt = torch.tensor(AREA_GENERATION, device=self.device)
         low_xt = -high_xt
@@ -142,11 +149,15 @@ class RobotEnv(EnvBase):
             + low_yt
         )
         out = TensorDict(
-            {   "xr":    0, 
-                "yr":    0,
+            {   "xr":    torch.zeros(tensordict.shape, device=self.device), 
+                "yr":    torch.zeros(tensordict.shape, device=self.device),
                 "xt":    xt,
                 "yt":    yt,
-                "angle": 0,
+                "angle": torch.zeros(tensordict.shape, device=self.device),
+                "old_xr": torch.zeros(tensordict.shape, device=self.device),
+                "old_yr": torch.zeros(tensordict.shape, device=self.device),
+                "old_xt": torch.zeros(tensordict.shape, device=self.device),
+                "old_yt": torch.zeros(tensordict.shape, device=self.device),
                 "params": tensordict["params"],
             },
             batch_size=tensordict.shape,
@@ -156,11 +167,15 @@ class RobotEnv(EnvBase):
     def _make_spec(self, td_params):
     # Under the hood, this will populate self.output_spec["observation"]
         self.observation_spec = Composite(
-            xr=Bounded(low=-CORD_RANGE,high=CORD_RANGE,shape=(1,),dtype=torch.float32),
-            yr=Bounded(low=-CORD_RANGE,high=CORD_RANGE,shape=(1,),dtype=torch.float32),
-            xt=Bounded(low=-CORD_RANGE,high=CORD_RANGE,shape=(1,),dtype=torch.float32),
-            yt=Bounded(low=-CORD_RANGE,high=CORD_RANGE,shape=(1,),dtype=torch.float32),
-            angle = Bounded(low=-ANGL_RANGE,high=ANGL_RANGE,shape=(1,),dtype=torch.float32),
+            xr=Bounded(low=-CORD_RANGE,high=CORD_RANGE,shape=()),
+            yr=Bounded(low=-CORD_RANGE,high=CORD_RANGE,shape=()),
+            xt=Bounded(low=-CORD_RANGE,high=CORD_RANGE,shape=()),
+            yt=Bounded(low=-CORD_RANGE,high=CORD_RANGE,shape=()),
+            angle = Bounded(low=-ANGL_RANGE,high=ANGL_RANGE,shape=()),
+            old_xr=Bounded(low=-CORD_RANGE,high=CORD_RANGE,shape=()),
+            old_yr=Bounded(low=-CORD_RANGE,high=CORD_RANGE,shape=()),
+            old_xt=Bounded(low=-CORD_RANGE,high=CORD_RANGE,shape=()),
+            old_yt=Bounded(low=-CORD_RANGE,high=CORD_RANGE,shape=()), 
             params=self.make_composite_from_td(td_params["params"]),
             shape=(),
         )
@@ -190,15 +205,16 @@ class RobotEnv(EnvBase):
         self.rng = rng
         
     @staticmethod
-    def gen_params(batch_size=None) -> TensorDictBase:
+    def gen_params( batch_size=None) -> TensorDictBase:
         if batch_size is None:
             batch_size = []
+        
         td = TensorDict(
             {
                 "params": TensorDict(
                     {
-                        "max_a": 0.5,
-                        "dt": 0.1,
+                        "max_a": torch.tensor(0.5),
+                        "dt": torch.tensor(0.1),
                     },
                     [],
                 )
@@ -210,9 +226,46 @@ class RobotEnv(EnvBase):
         return td
 
 env = RobotEnv()
+# env = TransformedEnv(
+#     env,
+#     UnsqueezeTransform(
+#         dim=-1,
+#         in_keys=["xr", "yr","xt","yt","angle","old_xr","old_yr","old_xt","old_yt"],
+#         in_keys_inv=["xr", "yr","xt","yt","angle","old_xr","old_yr","old_xt","old_yt"],
+#     ),
+# )
+
 check_env_specs(env)
-print("observation_spec:", env.observation_spec)
-print("state_spec:", env.state_spec)
-print("reward_spec:", env.reward_spec)
-td = env.reset()
-print("reset tensordict", td)
+
+# def simple_rollout(steps=100):
+#     # preallocate:
+#     data = TensorDict({}, [steps])
+#     # reset
+#     _data = env.reset()
+#     for i in range(steps):
+#         _data["action"] = env.action_spec.rand()
+#         _data = env.step(_data)
+#         data[i] = _data
+#         _data = step_mdp(_data, keep_other=True)
+#     return data
+
+
+# print("data from rollout:", simple_rollout(100))
+
+
+
+batch_size = 10 
+gen = env.gen_params(batch_size=batch_size)
+#print(f"gen: {gen.shape}, {gen.type}, {gen}")# number of environments to be executed in batch
+td = env.reset(env.gen_params(batch_size=batch_size))
+#print("reset (batch size of 10)", td)
+td = env.rand_step(td)
+#print("rand step (batch size of 10)", td)
+
+# rollout = env.rollout(
+#     3,
+#     auto_reset=False,  # we're executing the reset out of the ``rollout`` call
+#     tensordict=env.reset(env.gen_params(batch_size=[batch_size])),
+# )
+# print("rollout of len 3 (batch size of 10):", rollout)
+                 
