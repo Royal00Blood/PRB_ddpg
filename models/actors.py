@@ -36,7 +36,7 @@ class Actor(nn.Module):
         self.layer_4 = nn.Linear(layers[2], layers[3])
         self.batch_norm_4 = nn.LayerNorm(layers[3])
         
-        self.layer_5 = nn.Linear(layers[3], action_size)
+        self.layer_5 = nn.Linear(layers[3], 1)
          
         # init weights
         self.reset_weights()
@@ -52,11 +52,20 @@ class Actor(nn.Module):
         self.layer_5.weight.data.uniform_(-0.1, 0.1)
         
     def forward(self, state):
-        x = self.relu(self.layer_1(state))
-        x = self.relu(self.layer_2(x))
-        x = self.relu(self.layer_3(x))
-        x = self.relu(self.layer_4(x))
-        action = self.tanh(self.layer_5(x))* self.action_max
+        x = self.relu(self.batch_norm_1(self.layer_1(state)))
+        
+        v = self.relu(self.batch_norm_2(self.layer_2(x)))
+        v = self.relu(self.batch_norm_3(self.layer_3(v)))
+        v = self.relu(self.batch_norm_4(self.layer_4(v)))
+        
+        w = self.relu(self.batch_norm_2(self.layer_2(x)))
+        w = self.relu(self.batch_norm_3(self.layer_3(w)))
+        w = self.relu(self.batch_norm_4(self.layer_4(w)))
+        
+        action_v = self.tanh(self.layer_5(v))* self.action_max
+        action_w = self.tanh(self.layer_5(w))* self.action_max
+        
+        action = torch.cat((action_v,action_w), dim=1)
         return action
 
     def save_checkpoint(self):
