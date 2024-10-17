@@ -52,13 +52,13 @@ class Actor(nn.Module):
         self.layer_5.weight.data.uniform_(-0.1, 0.1)
         
     def forward(self, state):
-        x = self.relu(self.batch_norm_1(self.layer_1(state)))
-        
-        v = self.relu(self.batch_norm_2(self.layer_2(x)))
+        v = self.relu(self.batch_norm_1(self.layer_1(state)))
+        v = self.relu(self.batch_norm_2(self.layer_2(v)))
         v = self.relu(self.batch_norm_3(self.layer_3(v)))
         v = self.relu(self.batch_norm_4(self.layer_4(v)))
         
-        w = self.relu(self.batch_norm_2(self.layer_2(x)))
+        w = self.relu(self.batch_norm_1(self.layer_1(state)))
+        w = self.relu(self.batch_norm_2(self.layer_2(w)))
         w = self.relu(self.batch_norm_3(self.layer_3(w)))
         w = self.relu(self.batch_norm_4(self.layer_4(w)))
         
