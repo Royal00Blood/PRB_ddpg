@@ -65,8 +65,7 @@ class Actor(nn.Module):
         action_v = self.tanh(self.layer_5(v))* self.action_max
         action_w = self.tanh(self.layer_5(w))* self.action_max
         
-        action = torch.cat((action_v, action_w), dim=0)
-        print(action)
+        action = torch.cat((action_v, action_w), dim=-1)
         return action
 
     def save_checkpoint(self):
