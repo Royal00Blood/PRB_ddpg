@@ -28,16 +28,16 @@ AREA_GENERATION = AREA_DEFEAT - S_G_TARG
 TIME = 0.1
 
 # Параметры обучения
-EPISODES = 2500
-EP_STEPS = 250
+EPISODES = 4000
+EP_STEPS = 300
 
 #  Параметры проверки
 TEST_EPISODES = 100
-TEST_EP_STEPS = 200
+TEST_EP_STEPS = 250
 
 # Параметры моделей
 SEED = 10
-REWARD = EP_STEPS * 3
+REWARD = EP_STEPS * 2
 
 # Кол нейронов в слоях
     #[ly1, ly2, ly3(v/w), ly4(v/w), ly5(v/w)] 

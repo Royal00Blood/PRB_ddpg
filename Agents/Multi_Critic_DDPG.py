@@ -101,6 +101,7 @@ class PRB_DDPG_Agent:
         self.actor_optimizer.step()
         self.actor_optimizer.zero_grad()
         ##
+    
         self.update_target_networks()
         # Update Priorities
         new_priorities = (critic_loss.detach().cpu().numpy()  + 1e-5) / 2
@@ -144,7 +145,7 @@ class PRB_DDPG_Agent:
             env.set_number(episode)
             
             
-            for _ in range(ep_steps):# попробовать обучить при while
+            for i in range(ep_steps):# попробовать обучить при while
             # while not done:
                 if done:
                     break
@@ -152,10 +153,10 @@ class PRB_DDPG_Agent:
                 next_state, reward, done, _ = env.step(action)
                 
                 self.replay_buffer.push(state, action, reward, next_state, done)
-                
-                if len(self.replay_buffer) > self.batch_size:# Добавить обновление в случае кратности шага после проверки а размер буфера
-                    self.update()
-                    
+                if i % 3 == 0:
+                    if len(self.replay_buffer) > self.batch_size:# Добавить обновление в случае кратности шага после проверки а размер буфера
+                        self.update()
+                        
                 state = next_state
                 episode_reward += reward
             episode_rewards.append(episode_reward)
