@@ -33,7 +33,7 @@ EP_STEPS = 300
 
 #  Параметры проверки
 TEST_EPISODES = 100
-TEST_EP_STEPS = 250
+TEST_EP_STEPS = 300
 
 # Параметры моделей
 SEED = 10
