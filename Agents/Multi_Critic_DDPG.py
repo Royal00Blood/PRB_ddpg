@@ -125,14 +125,14 @@ class PRB_DDPG_Agent:
            
     def train(self, env, num_episodes=EPISODES, ep_steps=EP_STEPS):
         # Загрузка весов и моделей для продолжения обучения
-        if os.path.exists('/chekpoints'):
-            self.load_models()
+        # if os.path.exists('/chekpoints'):
+        #     self.load_models()
             
-        if os.path.exists('actor_weights.pth') and os.path.exists('critic_weights.pth') and os.path.exists('actor_target_weights.pth'):
-                self.actor.load_state_dict(torch.load('actor_weights.pth', weights_only=True))
-                self.critic.load_state_dict(torch.load('critic_weights.pth', weights_only=True))
-                self.actor_target.load_state_dict(torch.load('actor_target_weights.pth', weights_only=True))
-                self.critic_target.load_state_dict(torch.load('critic_target_weights.pth', weights_only=True))
+        # if os.path.exists('actor_weights.pth') and os.path.exists('critic_weights.pth') and os.path.exists('actor_target_weights.pth'):
+        #         self.actor.load_state_dict(torch.load('actor_weights.pth', weights_only=True))
+        #         self.critic.load_state_dict(torch.load('critic_weights.pth', weights_only=True))
+        #         self.actor_target.load_state_dict(torch.load('actor_target_weights.pth', weights_only=True))
+        #         self.critic_target.load_state_dict(torch.load('critic_target_weights.pth', weights_only=True))
                 
         start_time = time.time()
         episode_rewards = []
