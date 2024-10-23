@@ -1,5 +1,6 @@
 # Compiled output
 /runs
+/runs_hist
 /images
 /chekpoints
 **/__pycache__

@@ -7,8 +7,8 @@ ALPHA = 0.65
 GAMMA = 0.99   # 0.9 to 0.999
 TAU   = 0.001  # 0.01 to 0.01
 
-LR_A = 0.0001  # 0.0001 to 0.001
-LR_C = 0.001   # 0.001 to 0.01
+LR_A = 0.0006  # 0.0001 to 0.001
+LR_C = 0.006   # 0.001 to 0.01
 
 WEIGHT_DEC = 0.005 # 0.0001 0.01
 
@@ -28,7 +28,7 @@ AREA_GENERATION = AREA_DEFEAT - S_G_TARG
 TIME = 0.1
 
 # Параметры обучения
-EPISODES = 25000
+EPISODES = 2500
 EP_STEPS = 250
 
 #  Параметры проверки
