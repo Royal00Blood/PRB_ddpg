@@ -154,7 +154,7 @@ class PRB_DDPG_Agent:
                 
                 self.replay_buffer.push(state, action, reward, next_state, done)
                 if episode % 3 == 0:
-                    if len(self.replay_buffer) > self.batch_size:# Добавить обновление в случае кратности шага после проверки а размер буфера
+                    if len(self.replay_buffer) > self.batch_size:
                         self.update()
                         
                 state = next_state
