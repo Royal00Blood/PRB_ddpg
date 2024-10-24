@@ -150,5 +150,5 @@ class CustomEnv(gym.Env):
         plt.plot(self.__target_point[0], self.__target_point[1], color='red')
         plt.xlabel("X")
         plt.ylabel("Y")
-        plt.savefig('images/plot' + str(self.__number) + '.png', format='png')
+        plt.savefig('images_exp/plot' + str(self.__number) + '.png', format='png')
         plt.close()
