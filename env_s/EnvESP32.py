@@ -1,6 +1,6 @@
 import numpy as np
-from settings import (STATE_SIZE, ACTION_SIZE, 
-                      ACTION_, STATE_, AREA_DEFEAT, 
+from settings import (S_SIZE, A_SIZE, 
+                      A_MAX, S_MAX, AREA_DEFEAT, 
                       AREA_WIN, AREA_GENERATION, 
                       TIME, EP_STEPS, S_G_TARG )
 import gym
@@ -29,16 +29,16 @@ client_socket.connect((esp32_ip, esp32_port))
 timer_ANN = time.perf_counter()
 
 class CustomEnv(gym.Env):
-    def __init__(self):
-        self.action_space      = gym.spaces.Box(low=np.array([-ACTION_] * ACTION_SIZE ), high=np.array([ACTION_] * ACTION_SIZE), dtype=np.float32)
-        self.observation_space = gym.spaces.Box(low=np.array([STATE_  ] * STATE_SIZE  ), high=np.array([STATE_ ] * STATE_SIZE ), dtype=np.float32)
+    def __init__(self, target_point=[0,0]):
+        self.action_space      = gym.spaces.Box(low=np.array([-A_MAX] * A_SIZE ), high=np.array([A_MAX] * A_SIZE), dtype=np.float32)
+        self.observation_space = gym.spaces.Box(low=np.array([S_MAX  ] * S_SIZE  ), high=np.array([S_MAX ] * S_SIZE ), dtype=np.float32)
+        self.__target_point=target_point
         self.reset_env()
 
     def reset_env(self):
-        self.state = np.zeros(STATE_SIZE) # [position robot_x , position robot_y, 
+        self.state = np.zeros(S_SIZE) # [position robot_x , position robot_y, 
                                           #  target point X   , target point Y, 
-                                          #  velocity         , angular velocity, 
-                                          #  Quaternions Z    , Quaternions W ]
+                                          #  angle ]
         self.done = False
         self.__reset_robot()
         self.__x_list, self.__y_list = [], []
@@ -48,8 +48,8 @@ class CustomEnv(gym.Env):
 
     def __reset_robot(self):
         self.__position_robot = np.zeros(2) # The position of the robot [x, y]
-        
-        self.__target_point =[random.uniform(S_G_TARG, AREA_GENERATION), random.uniform(S_G_TARG, AREA_GENERATION)]
+        if self.__target_point != [0,0]:
+            self.__target_point =[random.uniform(S_G_TARG, AREA_GENERATION), random.uniform(S_G_TARG, AREA_GENERATION)]
         # while(1):
         #     self.__target_point = [random.uniform(-AREA_GENERATION,AREA_GENERATION), random.uniform(-AREA_GENERATION,AREA_GENERATION)] # Target point [x, y]
         #     if (self.__target_point[0] != 0 or self.__target_point[1] != 0):
@@ -101,8 +101,8 @@ class CustomEnv(gym.Env):
             else:
                 return -EP_STEPS
         else:
-            reward = self.__dist_reward() + self.__angle_reward() 
-            return reward
+            return self.__dist_reward() + self.__angle_reward() 
+            
                        
     def __dist_reward(self):
         dist_new = DistanceBW2points(self.__target_point[0], self.__target_point[1], self.__position_robot[0], self.__position_robot[1]).getDistance()

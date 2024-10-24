@@ -222,6 +222,6 @@ class PRB_DDPG_Agent:
                 state = next_state
                 
             rewards.append(total_reward)
-            print(f"Episode {episode+1}, Reward: {total_reward:.2f}")
+            print(f"Episode {episode+1}, Reward: {total_reward:.2f}, Target point {state[2]:.2f} , {state[3]:.2f}")
         
         print(f"Average reward: {np.mean(rewards):.2f}")
