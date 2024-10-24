@@ -145,7 +145,7 @@ class PRB_DDPG_Agent:
             env.set_number(episode)
             
             
-            for i in range(ep_steps):# попробовать обучить при while
+            for _ in range(ep_steps):# попробовать обучить при while
             # while not done:
                 if done:
                     break
@@ -153,7 +153,7 @@ class PRB_DDPG_Agent:
                 next_state, reward, done, _ = env.step(action)
                 
                 self.replay_buffer.push(state, action, reward, next_state, done)
-                if i % 3 == 0:
+                if episode % 3 == 0:
                     if len(self.replay_buffer) > self.batch_size:# Добавить обновление в случае кратности шага после проверки а размер буфера
                         self.update()
                         
