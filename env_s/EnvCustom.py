@@ -19,7 +19,7 @@ class CustomEnv(gym.Env):
                                           # angle]
         self.done = False
         self.__reset_robot()
-        self.__x_list, self.__y_list = [], []
+        self.__x_list, self.__y_list, self.__angle_list = [], [], []
         self.__number = 0
         self.__reward = 0
         return self.state
@@ -63,7 +63,7 @@ class CustomEnv(gym.Env):
         self.__robot_quat[3] = np.cos(self.__d_angl_rad / 2)
         self.__x_list.append(self.__position_robot[0])
         self.__y_list.append(self.__position_robot[1])
-    
+        self.__angle_list.append(self.__d_angl_rad)
         return [self.__position_robot[0] , self.__position_robot[1],
                 self.__target_point[0]   , self.__target_point[1]  ,
                 self.__d_angl_rad]
