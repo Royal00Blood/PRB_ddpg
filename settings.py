@@ -14,7 +14,7 @@ WEIGHT_DEC = 0.005 # 0.0001 0.01
 
 # Параметры среды
 S_SIZE  = 5
-A_SIZE = 1
+A_SIZE = 2
 
 A_MAX = 0.5
 S_MAX  = 10.0
@@ -28,7 +28,7 @@ AREA_GENERATION = AREA_DEFEAT - S_G_TARG
 TIME = 0.1
 
 # Параметры обучения
-EPISODES = 4000
+EPISODES = 2500
 EP_STEPS = 400
 
 #  Параметры проверки
@@ -41,7 +41,7 @@ REWARD = EP_STEPS * 2
 
 # Кол нейронов в слоях
     #[ly1, ly2, ly3(v/w), ly4(v/w), ly5(v/w)] 
-L_A  = [512, 500, 450, 250]
+L_A  = [64, 150, 450, 250]
 L_C1 = [400, 300, 200]
 
 

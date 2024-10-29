@@ -49,9 +49,9 @@ class CustomEnv(gym.Env):
         return self.state, self.__reward, self.done, {}
     
     def __calculate_state(self,action):
-        # action [v, w] [w]
-        v = 0.25        #action[0]
-        w = action[0]  #action[1]
+        # action [v, w] 
+        v = action[0]
+        w = action[1]
         self.__d_angl_rad += (w * TIME)  # изменение угла в радианах
         
         # The position of the robot [x, y]
