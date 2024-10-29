@@ -20,8 +20,9 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class PRB_DDPG_Agent:
     def __init__(self, state_size=S_SIZE, action_size=A_SIZE, lr_actor=LR_A, lr_critic=LR_C, 
                  gamma=GAMMA, tau=TAU, buffer_size=BUFFER_SIZE, batch_size=BATCH_SIZE, alpha=ALPHA,
-                 weight_decay = WEIGHT_DEC, action_max=A_MAX, n_dic=N_DIC):
-        
+                 weight_decay = WEIGHT_DEC, action_max=A_MAX, n_dic=N_DIC,
+                 dir="C:/Users/Ivan/Documents/python_github/PRB_ddpg/chekpoints"):
+        self.dir = dir
         self.state_size = state_size
         self.action_size = action_size
         self.lr_actor = lr_actor

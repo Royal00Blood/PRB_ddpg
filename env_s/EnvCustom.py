@@ -30,8 +30,8 @@ class CustomEnv(gym.Env):
         self.__robot_quat     = np.zeros(4) # Quaternions [Qx, Qy, Qz, Qw]
         # self.__target_point =[random.choice([random.uniform(S_G_TARG, AREA_GENERATION), random.uniform(-AREA_GENERATION,-S_G_TARG)]),
         #                       random.choice([random.uniform(S_G_TARG, AREA_GENERATION), random.uniform(-AREA_GENERATION,-S_G_TARG)])]
-        if self.__target_point != [0,0]:
-            self.__target_point =[random.uniform(S_G_TARG, AREA_GENERATION), random.uniform(S_G_TARG, AREA_GENERATION)]    
+        # if self.__target_point != [0,0]:
+        self.__target_point =[random.uniform(S_G_TARG, AREA_GENERATION), random.uniform(S_G_TARG, AREA_GENERATION)]    
         self.__old_target_point = self.__target_point
         self.__old_position_robot = [0,0]
         
@@ -50,7 +50,7 @@ class CustomEnv(gym.Env):
     
     def __calculate_state(self,action):
         # action [v, w] [w]
-        v = 0.1        #action[0]
+        v = 0.25        #action[0]
         w = action[0]  #action[1]
         self.__d_angl_rad += (w * TIME)  # изменение угла в радианах
         
