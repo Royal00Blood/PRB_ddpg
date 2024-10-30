@@ -48,11 +48,11 @@ class PRB_DDPG_Agent:
         self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=self.lr_actor, weight_decay=self.weight_decay)
         self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=self.lr_critic, weight_decay=self.weight_decay)
         
-    def get_action(self,state):
+    def get_action(self, state):
         state = torch.FloatTensor(state).to(device)
         action = self.actor(state).detach().cpu().numpy() 
-        action_n = action + self.noise.sample()*self.n_treshold
-        action = np.clip(a=action_n,a_min = -self.action_max, a_max = self.action_max)
+        action_n = action + self.noise.sample() * self.n_treshold
+        action = np.clip(a=action_n, a_min = -self.action_max, a_max = self.action_max)
         return action
       
     def update_target_networks(self):
@@ -125,14 +125,14 @@ class PRB_DDPG_Agent:
            
     def train(self, env, num_episodes=EPISODES, ep_steps=EP_STEPS):
         # Загрузка весов и моделей для продолжения обучения
-        # if os.path.exists('/chekpoints'):
-        #     self.load_models()
+        if os.path.exists('/chekpoints'):
+            self.load_models()
             
-        # if os.path.exists('actor_weights.pth') and os.path.exists('critic_weights.pth') and os.path.exists('actor_target_weights.pth'):
-        #         self.actor.load_state_dict(torch.load('actor_weights.pth', weights_only=True))
-        #         self.critic.load_state_dict(torch.load('critic_weights.pth', weights_only=True))
-        #         self.actor_target.load_state_dict(torch.load('actor_target_weights.pth', weights_only=True))
-        #         self.critic_target.load_state_dict(torch.load('critic_target_weights.pth', weights_only=True))
+        if os.path.exists('actor_weights.pth') and os.path.exists('critic_weights.pth') and os.path.exists('actor_target_weights.pth'):
+                self.actor.load_state_dict(torch.load('actor_weights.pth', weights_only=True))
+                self.critic.load_state_dict(torch.load('critic_weights.pth', weights_only=True))
+                self.actor_target.load_state_dict(torch.load('actor_target_weights.pth', weights_only=True))
+                self.critic_target.load_state_dict(torch.load('critic_target_weights.pth', weights_only=True))
                 
         start_time = time.time()
         episode_rewards = []
@@ -148,7 +148,7 @@ class PRB_DDPG_Agent:
             # while not done:
                 if done:
                     break
-                action =self.get_action(state) 
+                action = self.get_action(state) 
                 next_state, reward, done, _ = env.step(action)
                 
                 self.replay_buffer.push(state, action, reward, next_state, done)
