@@ -63,7 +63,6 @@ class CustomEnv(gym.Env):
         
     def step(self, action):
         # Применяем действие к состоянию и получаем новое состояние
-        action = [0.1, action]
         self.__send_to_esp(action[0], action[1])
         self.state = self.__get_state()
         # Проверяем, завершен ли эпизод
