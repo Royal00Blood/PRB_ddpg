@@ -125,8 +125,8 @@ class CustomEnv(gym.Env):
             goal = False
             self.done = True
             return goal
-        elif ( self.__target_point[0] + AREA_WIN > self.__position_robot[0] > self.__target_point[0] - AREA_WIN   and
-               self.__target_point[1] + AREA_WIN > self.__position_robot[1] > self.__target_point[1] - AREA_WIN):
+        elif ( (self.__target_point[0] + AREA_WIN > self.__position_robot[0] > self.__target_point[0] - AREA_WIN )  and
+               (self.__target_point[1] + AREA_WIN > self.__position_robot[1] > self.__target_point[1] - AREA_WIN)):
             goal = True
             self.done = True
             #self.graf_move()

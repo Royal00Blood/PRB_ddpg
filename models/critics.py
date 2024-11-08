@@ -13,7 +13,7 @@ class Critic(nn.Module):
         
         self.chekpoint = os.path.join(dir_chekpoint, name)
         self.seed = torch.manual_seed(seed)
-        self.relu = nn.ReLU()
+        self.relu = nn.LeakyReLU#nn.ReLU()
         self.layer_1 = nn.Linear(state_size+action_size, layers[0])
         self.batch_norm_1 = nn.LayerNorm(layers[0])
         self.layer_2 = nn.Linear(layers[0], layers[1])

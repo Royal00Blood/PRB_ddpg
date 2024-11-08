@@ -163,7 +163,7 @@ class PRB_DDPG_Agent:
             episode_rewards.append(episode_reward)
             avg_reward = np.mean(episode_rewards[-100:])
             
-            print(f"Episode {episode+1}/{num_episodes}, Reward: {episode_reward:.2f}, Avg Reward: {avg_reward:.2f}, Target point {state[2]:.2f} , {state[3]:.2f}")
+            print(f"Episode {episode+1}/{num_episodes}, Reward: {episode_reward:.2f}, Avg Reward: {avg_reward:.2f}, Target point {state[2]:.2f} , {state[3]:.2f}, Cord_last: {state[0]:.2f} , {state[1]:.2f}")
 
             if episode % 5 == 0:
                 # Save model

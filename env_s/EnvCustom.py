@@ -73,7 +73,7 @@ class CustomEnv(gym.Env):
     def __new_reward(self, goal):
         if self.done:
             if goal:
-                self.graf_move()
+                #self.graf_move()
                 return REWARD
             else:
                 return -REWARD
@@ -101,8 +101,9 @@ class CustomEnv(gym.Env):
             goal = False
             self.done = True
             return goal
-        elif ( self.__target_point[0] + AREA_WIN > self.__position_robot[0] > self.__target_point[0] - AREA_WIN   and
-               self.__target_point[1] + AREA_WIN > self.__position_robot[1] > self.__target_point[1] - AREA_WIN):
+        # elif ( (self.__target_point[0] + AREA_WIN > self.__position_robot[0] > self.__target_point[0] - AREA_WIN )  and
+        #        (self.__target_point[1] + AREA_WIN > self.__position_robot[1] > self.__target_point[1] - AREA_WIN)):
+        elif (self.__target_point[0]==self.__position_robot[0]) and (self.__target_point[1]==self.__position_robot[1]):
             goal = True
             self.done = True
             #self.graf_move()
