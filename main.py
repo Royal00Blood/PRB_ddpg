@@ -7,7 +7,7 @@ import random
 import torch._dynamo
 torch._dynamo.config.suppress_errors = True
 
-target_point = [random.uniform(S_G_TARG, AREA_GENERATION), random.uniform(S_G_TARG, AREA_GENERATION)] 
+#target_point = [random.uniform(S_G_TARG, AREA_GENERATION), random.uniform(S_G_TARG, AREA_GENERATION)] 
 
 env = env_learn()
 #envesp = env_esp(target_point)

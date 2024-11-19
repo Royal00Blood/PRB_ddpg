@@ -3,8 +3,9 @@ import os
 import torch.nn as nn
 import torch._dynamo
 import torch.nn.functional as F
-from settings import (A_MAX, S_SIZE, A_SIZE, SEED, L_A, DIR_CHEKPOINT)
+from settings import (A_MAX, S_SIZE, A_SIZE, SEED, L_A, DIR_CHEKPOINT,NUM_PARAMETERS,INIT)
 torch._dynamo.config.suppress_errors = False
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
 class Actor(nn.Module):
     """ Арихитектура модели Актера для сети DDPG принимает на вход:
@@ -18,7 +19,7 @@ class Actor(nn.Module):
                  layers=L_A, dir_chekpoint=DIR_CHEKPOINT, name = 'chekpoint_actor' ):
         super(Actor, self).__init__()
         self.tanh = nn.Tanh()
-        self.relu = nn.LeakyReLU() #nn.ReLU()
+        self.relu = nn.LeakyReLU() #nn.PReLU(num_parameters=NUM_PARAMETERS, init=INIT, device=device) #nn.ReLU()
         self.chekpoint = os.path.join(dir_chekpoint, name)
         self.seed = torch.manual_seed(seed)
         self.action_max = action_max
@@ -33,10 +34,10 @@ class Actor(nn.Module):
         self.layer_3 = nn.Linear(layers[1], layers[2])
         self.batch_norm_3 = nn.LayerNorm(layers[2])
         
-        # self.layer_4 = nn.Linear(layers[2], layers[3])
-        # self.batch_norm_4 = nn.LayerNorm(layers[3])
+        self.layer_4 = nn.Linear(layers[2], layers[3])
+        self.batch_norm_4 = nn.LayerNorm(layers[3])
         
-        self.layer_5 = nn.Linear(layers[2], action_size)
+        self.layer_5 = nn.Linear(layers[3], action_size)
          
         # init weights
         self.reset_weights()
@@ -44,9 +45,15 @@ class Actor(nn.Module):
     def reset_weights(self):
         
         # Инициализация весов для слоев
-        for layer in [self.layer_1, self.layer_2, self.layer_3]:#, self.layer_4]:
-            nn.init.kaiming_uniform_(layer.weight, a=0, mode='fan_in', nonlinearity='relu')
+        for layer in [self.layer_1, self.layer_2, self.layer_3, self.layer_4]:
+            nn.init.kaiming_normal_(layer.weight, mode='fan_out', nonlinearity='leaky_relu')
+            
+            # Инициализируем смещения
             nn.init.constant_(layer.bias, 0.1)
+
+            # Проверяем, является ли слой PReLU и если да, то инициализируем альфа
+            if isinstance(layer, nn.PReLU):
+                nn.init.constant_(layer.weight, INIT)
             
         # Инициализация выходного слоя
         self.layer_5.weight.data.uniform_(-0.1, 0.1)
@@ -55,7 +62,7 @@ class Actor(nn.Module):
         x = self.relu(self.batch_norm_1(self.layer_1(state)))
         x = self.relu(self.batch_norm_2(self.layer_2(x)))
         x = self.relu(self.batch_norm_3(self.layer_3(x)))
-        #x = self.relu(self.batch_norm_4(self.layer_4(x)))
+        x = self.relu(self.batch_norm_4(self.layer_4(x)))
         action = self.tanh(self.layer_5(x))* self.action_max 
         return action
 
