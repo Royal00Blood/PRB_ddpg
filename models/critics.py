@@ -34,11 +34,8 @@ class Critic(nn.Module):
         self.reset_parameters()
         
     def reset_parameters(self):
-        for layer in [self.layer_1, self.layer_2,  self.layer_3, self.layer_4]:
-            if self.activ_f ==nn.LeakyReLU:
-                nn.init.kaiming_normal_(layer.weight, mode='fan_out', nonlinearity='leaky_relu')
-            elif self.activ_f ==nn.ReLU:
-                nn.init.kaiming_normal_(layer.weight, mode='fan_out', nonlinearity='relu')
+        for layer in self.layers:
+            nn.init.kaiming_normal_(layer.weight, mode='fan_out', nonlinearity='relu')
             # Инициализируем смещения
             nn.init.constant_(layer.bias, 0.1)
             # # Проверяем, является ли слой PReLU и если да, то инициализируем альфа

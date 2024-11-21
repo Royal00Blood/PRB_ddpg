@@ -16,10 +16,10 @@ class Actor(nn.Module):
         layers      - вектор со значениями количества нейронов в каждом слое
     """
     def __init__(self, state_size, action_size, seed, action_max, 
-                 layers, dir_chekpoint, name, function_a):
+                 layers, dir_chekpoint, name, activation_function):
         super(Actor, self).__init__()
         self.tanh = nn.Tanh()
-        self.function_a = function_a
+        self.activation_function = activation_function
         self.chekpoint = os.path.join(dir_chekpoint, name)
         self.seed = torch.manual_seed(seed)
         self.action_max = action_max
@@ -28,10 +28,14 @@ class Actor(nn.Module):
         self.layers = nn.ModuleList()
         self.batch_norms = nn.ModuleList()
 
-        # Создание слоев
-        for i in range(len(layers) - 1):
-            self.layers.append(nn.Linear(layers[i], layers[i + 1]))
-            self.batch_norms.append(nn.LayerNorm(layers[i + 1]))
+        # Создание первого слоя
+        self.layers.append(nn.Linear(state_size, layers[0]))
+        self.batch_norms.append(nn.LayerNorm(layers[0]))
+
+        # Создание скрытых слоев
+        for i in range(1, len(layers)):
+            self.layers.append(nn.Linear(layers[i-1], layers[i]))
+            self.batch_norms.append(nn.LayerNorm(layers[i]))
 
         # Выходной слой
         self.output_layer = nn.Linear(layers[-1], action_size)
@@ -41,25 +45,19 @@ class Actor(nn.Module):
     
     def reset_weights(self):
         
-        # Инициализация весов для скрытых слоев
+        # Инициализация весов и смещений
         for layer in self.layers:
-            if self.function_a == nn.LeakyReLU:
-                nn.init.kaiming_normal_(layer.weight, mode='fan_out', nonlinearity='leaky_relu')
-            elif self.function_a == nn.ReLU:
-                nn.init.kaiming_normal_(layer.weight, mode='fan_out', nonlinearity='relu')
+            nn.init.kaiming_normal_(layer.weight, mode='fan_out', nonlinearity='relu')
             nn.init.constant_(layer.bias, 0.1)
-            # Проверяем, является ли слой PReLU и если да, то инициализируем альфа
-            if isinstance(layer, nn.PReLU):
-                nn.init.constant_(layer.weight, INIT)
-            
-         # Инициализация выходного слоя
+
+        # Инициализация выходного слоя
         nn.init.uniform_(self.output_layer.weight.data, -0.1, 0.1)
-        
+
     def forward(self, state):
         x = state
-        # Применение скрытых слоев и нормализации
+        # Применение скрытых слоев, нормализации и активации
         for layer, batch_norm in zip(self.layers, self.batch_norms):
-            x = self.function_a(batch_norm(layer(x)))
+            x = self.activation_function(batch_norm(layer(x)))
         action = self.tanh(self.output_layer(x)) * self.action_max 
         return action
 

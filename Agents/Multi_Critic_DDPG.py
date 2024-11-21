@@ -5,11 +5,10 @@ import numpy as np
 from models.actors import Actor
 from models.critics import Critic
 import os
-from settings import (S_SIZE, 
-                      A_SIZE, 
-                      LR_A, LR_C, 
-                      L_C1,L_C2,
-                      L_A,
+from settings import (S_SIZE, A_SIZE, 
+                      LR_A, LR_C_1, LR_C_2, 
+                      L_A, L_C1, L_C2,
+                      
                       BATCH_SIZE,
                       GAMMA,
                       BUFFER_SIZE,
@@ -23,7 +22,7 @@ from settings import (S_SIZE,
                       WEIGHT_DEC,
                       N_DIC, 
                       DIR_CHEKPOINT,
-                      SEED,FUNCTION,
+                      SEED,
                       T_NAME_CHEKPOINT_A,T_NAME_CHEKPOINT_C1,T_NAME_CHEKPOINT_C2,
                       NAME_CHEKPOINT_C1,NAME_CHEKPOINT_A,NAME_CHEKPOINT_C2,
                       INIT
@@ -40,8 +39,8 @@ class PRB_DDPG_Agent:
                  state_size  =S_SIZE, 
                  action_size =A_SIZE, 
                  lr_actor   = LR_A, 
-                 lr_critic_1= LR_C,
-                 lr_critic_2= LR_C,
+                 lr_critic_1= LR_C_1,
+                 lr_critic_2= LR_C_2,
                  gamma= GAMMA, 
                  tau  = TAU, 
                  buffer_size = BUFFER_SIZE, 
@@ -61,7 +60,7 @@ class PRB_DDPG_Agent:
         self.layers_c2 = L_C2
         self.gamma = gamma
         self.tau = tau
-        self.function = FUNCTION
+        self.function = F.relu
         self.buffer_size = buffer_size
         self.batch_size = batch_size
         self.weight_decay = weight_decay
@@ -263,8 +262,8 @@ class PRB_DDPG_Agent:
         self.critic_1.load_state_dict(torch.load('critic_weights_1.pth', weights_only=True))
         self.critic_2.load_state_dict(torch.load('critic_weights_2.pth', weights_only=True))
         self.actor_target.load_state_dict(torch.load('actor_target_weights.pth', weights_only=True))
-        self.critic_target_1.load_state_dict(torch.load('critic_target_weights.pth', weights_only=True))
-        self.critic_target_2.load_state_dict(torch.load('critic_target_weights.pth', weights_only=True))
+        self.critic_target_1.load_state_dict(torch.load('critic_target_weights_1.pth', weights_only=True))
+        self.critic_target_2.load_state_dict(torch.load('critic_target_weights_2.pth', weights_only=True))
         self.load_models()
        
         rewards = []

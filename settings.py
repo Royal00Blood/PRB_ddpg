@@ -46,7 +46,7 @@ TEST_EP_STEPS = 300
 SEED = 10
 REWARD = EP_STEPS * 2
 
-FUNCTION = nn.LeakyReLU
+
 # Кол нейронов в слоях
     #[ly1, ly2, ly3(v/w), ly4(v/w), ly5(v/w)] 
 L_A  = [250, 300, 400, 500]
