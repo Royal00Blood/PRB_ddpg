@@ -34,12 +34,12 @@ AREA_GENERATION = AREA_DEFEAT - S_G_TARG
 TIME = 0.1
 
 # Параметры обучения
-EPISODES = 25000
-EP_STEPS = 350
+EPISODES = 10000
+EP_STEPS = 300
 
 #  Параметры проверки
 TEST_EPISODES = 100
-TEST_EP_STEPS = 350
+TEST_EP_STEPS = 300
 
 # Параметры моделей
 SEED = 10
@@ -48,8 +48,8 @@ REWARD = EP_STEPS * 2
 # Кол нейронов в слоях
     #[ly1, ly2, ly3(v/w), ly4(v/w), ly5(v/w)] 
 L_A  = [250, 300, 400, 500]
-L_C1 = [100, 150, 220, 350] #[512, 400, 200, 50 ]
-
+L_C1 = [512, 400, 200, 50 ] #[100, 150, 220, 350]
+L_C2 = [412, 300, 100, 20 ]
 
 
 DIR_CHEKPOINT = "C:/Users/Ivan/Documents/python_github/PRB_ddpg/chekpoints"

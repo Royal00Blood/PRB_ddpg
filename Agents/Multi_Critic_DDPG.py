@@ -5,11 +5,11 @@ import numpy as np
 from models.actors import Actor
 from models.critics import Critic
 import os
-from settings import (S_SIZE, A_SIZE, LR_A, LR_C, L_C1,
+from settings import (S_SIZE, A_SIZE, LR_A, LR_C, L_C1,L_C2,
                       BATCH_SIZE,GAMMA,BUFFER_SIZE,
                       ALPHA, TAU, EPISODES,
                       EP_STEPS, TEST_EP_STEPS,
-                      TEST_EPISODES, A_MAX, WEIGHT_DEC,N_DIC)
+                      TEST_EPISODES, A_MAX, WEIGHT_DEC,N_DIC, DIR_CHEKPOINT)
 from torch.utils.tensorboard import SummaryWriter
 from buffers.PrioritizedReplayBuffer import PrioritizedReplayBuffer
 import time
@@ -18,11 +18,19 @@ from noise import Noise
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class PRB_DDPG_Agent:
-    def __init__(self, state_size=S_SIZE, action_size=A_SIZE, lr_actor=LR_A, lr_critic=LR_C, 
-                 gamma=GAMMA, tau=TAU, buffer_size=BUFFER_SIZE, batch_size=BATCH_SIZE, alpha=ALPHA,
-                 weight_decay = WEIGHT_DEC, action_max=A_MAX, n_dic=N_DIC,
-                 dir="C:/Users/Ivan/Documents/python_github/PRB_ddpg/chekpoints"):
-        self.dir = dir
+    def __init__(self, state_size=S_SIZE, 
+                 action_size=A_SIZE, 
+                 lr_actor=LR_A, 
+                 lr_critic=LR_C, 
+                 gamma=GAMMA, 
+                 tau=TAU, 
+                 buffer_size=BUFFER_SIZE, 
+                 batch_size=BATCH_SIZE, 
+                 alpha=ALPHA,
+                 weight_decay = WEIGHT_DEC, 
+                 action_max=A_MAX, 
+                 n_dic=N_DIC,
+                 dir=DIR_CHEKPOINT):
         self.state_size = state_size
         self.action_size = action_size
         self.lr_actor = lr_actor
@@ -31,23 +39,32 @@ class PRB_DDPG_Agent:
         self.tau = tau
         self.buffer_size = buffer_size
         self.batch_size = batch_size
-        self.action_max = action_max 
         self.weight_decay = weight_decay
+        self.action_max = action_max 
+        self.n_dic = n_dic
+        self.dir = dir
         self.replay_buffer = PrioritizedReplayBuffer(buffer_size, alpha)
+        self.layers_critic_1 = L_C1
+        self.layers_critic_2 = L_C2
+        self.noise = Noise(self.action_size)
+        self.n_treshold =1
+        # for plotting
         comment = f"lr_actor={lr_actor}, lr_critic={lr_critic}, gamma={gamma}, tau={tau}, buffer_size={buffer_size}, batch_size={batch_size}"
         self.writer = SummaryWriter(comment=comment)
         self.global_step = 0
-        self.layers_critic = L_C1
-        self.noise = Noise(self.action_size)
-        self.n_treshold =1
-        self.n_dic = n_dic
         
-        self.actor = torch.compile(Actor(self.state_size, self.action_size)).to(device)
-        self.critic = torch.compile(Critic(self.state_size, self.action_size,layers=self.layers_critic, name="critic")).to(device)
+        
+        self.actor    = torch.compile(Actor(self.state_size , self.action_size)).to(device)
+        self.critic_1 = torch.compile(Critic(self.state_size, self.action_size,layers=self.layers_critic_1, name="critic_1")).to(device)
+        self.critic_2 = torch.compile(Critic(self.state_size, self.action_size,layers=self.layers_critic_2, name="critic_2")).to(device)
+        
         self.actor_target = torch.compile(Actor(state_size, action_size,name="actor_target")).to(device)
-        self.critic_target = torch.compile(Critic(self.state_size, self.action_size,layers=self.layers_critic,name="critic_target")).to(device)
-        self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=self.lr_actor, weight_decay=self.weight_decay)
-        self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=self.lr_critic, weight_decay=self.weight_decay)
+        self.critic_target_1 = torch.compile(Critic(self.state_size, self.action_size, layers=self.layers_critic_1,name="critic_target_1")).to(device)
+        self.critic_target_2 = torch.compile(Critic(self.state_size, self.action_size, layers=self.layers_critic_2,name="critic_target_2")).to(device)
+        
+        self.actor_optimizer    = optim.Adam(self.actor.parameters()   , lr=self.lr_actor , weight_decay=self.weight_decay)
+        self.critic_optimizer_1 = optim.Adam(self.critic_1.parameters(), lr=self.lr_critic, weight_decay=self.weight_decay)
+        self.critic_optimizer_2 = optim.Adam(self.critic_2.parameters(), lr=self.lr_critic, weight_decay=self.weight_decay)
         
     def get_action(self,state):
         state = torch.FloatTensor(state).to(device)
@@ -59,7 +76,8 @@ class PRB_DDPG_Agent:
     def update_target_networks(self):
         """Update the target networks."""
         self.soft_update(self.actor  , self.actor_target, self.tau)
-        self.soft_update(self.critic, self.critic_target, self.tau)
+        self.soft_update(self.critic_1, self.critic_target_1, self.tau)
+        self.soft_update(self.critic_2, self.critic_target_2, self.tau)
         
     def soft_update(self, source, target, tau):
         """Softly update target network parameters."""
@@ -72,7 +90,7 @@ class PRB_DDPG_Agent:
             return
         
         states, actions, rewards, next_states, dones = zip(*transitions)
-        states = torch.FloatTensor(states).to(device)
+        states  = torch.FloatTensor(states) .to(device)
         actions = torch.FloatTensor(actions).to(device)
         next_states = torch.FloatTensor(next_states).to(device)
         rewards = torch.FloatTensor(rewards).to(device)
