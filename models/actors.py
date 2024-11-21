@@ -15,55 +15,52 @@ class Actor(nn.Module):
         action_max  - максимальное значение действия по модулю
         layers      - вектор со значениями количества нейронов в каждом слое
     """
-    def __init__(self, state_size=S_SIZE, action_size=A_SIZE, seed=SEED, action_max = A_MAX, 
-                 layers=L_A, dir_chekpoint=DIR_CHEKPOINT, name = 'chekpoint_actor' ):
+    def __init__(self, state_size, action_size, seed, action_max, 
+                 layers, dir_chekpoint, name, function_a):
         super(Actor, self).__init__()
         self.tanh = nn.Tanh()
-        self.relu = nn.LeakyReLU() #nn.PReLU(num_parameters=NUM_PARAMETERS, init=INIT, device=device) #nn.ReLU()
+        self.function_a = function_a
         self.chekpoint = os.path.join(dir_chekpoint, name)
         self.seed = torch.manual_seed(seed)
         self.action_max = action_max
         
-        # init layers
-        self.layer_1 = nn.Linear(state_size, layers[0])
-        self.batch_norm_1 = nn.LayerNorm(layers[0])
-        
-        self.layer_2 = nn.Linear(layers[0], layers[1])
-        self.batch_norm_2 = nn.LayerNorm(layers[1])
-        
-        self.layer_3 = nn.Linear(layers[1], layers[2])
-        self.batch_norm_3 = nn.LayerNorm(layers[2])
-        
-        self.layer_4 = nn.Linear(layers[2], layers[3])
-        self.batch_norm_4 = nn.LayerNorm(layers[3])
-        
-        self.layer_5 = nn.Linear(layers[3], action_size)
-         
-        # init weights
+        # Инициализация слоев и нормализации
+        self.layers = nn.ModuleList()
+        self.batch_norms = nn.ModuleList()
+
+        # Создание слоев
+        for i in range(len(layers) - 1):
+            self.layers.append(nn.Linear(layers[i], layers[i + 1]))
+            self.batch_norms.append(nn.LayerNorm(layers[i + 1]))
+
+        # Выходной слой
+        self.output_layer = nn.Linear(layers[-1], action_size)
+
+        # Инициализация весов
         self.reset_weights()
     
     def reset_weights(self):
         
-        # Инициализация весов для слоев
-        for layer in [self.layer_1, self.layer_2, self.layer_3, self.layer_4]:
-            nn.init.kaiming_normal_(layer.weight, mode='fan_out', nonlinearity='leaky_relu')
-            
-            # Инициализируем смещения
+        # Инициализация весов для скрытых слоев
+        for layer in self.layers:
+            if self.function_a == nn.LeakyReLU:
+                nn.init.kaiming_normal_(layer.weight, mode='fan_out', nonlinearity='leaky_relu')
+            elif self.function_a == nn.ReLU:
+                nn.init.kaiming_normal_(layer.weight, mode='fan_out', nonlinearity='relu')
             nn.init.constant_(layer.bias, 0.1)
-
             # Проверяем, является ли слой PReLU и если да, то инициализируем альфа
             if isinstance(layer, nn.PReLU):
                 nn.init.constant_(layer.weight, INIT)
             
-        # Инициализация выходного слоя
-        self.layer_5.weight.data.uniform_(-0.1, 0.1)
+         # Инициализация выходного слоя
+        nn.init.uniform_(self.output_layer.weight.data, -0.1, 0.1)
         
     def forward(self, state):
-        x = self.relu(self.batch_norm_1(self.layer_1(state)))
-        x = self.relu(self.batch_norm_2(self.layer_2(x)))
-        x = self.relu(self.batch_norm_3(self.layer_3(x)))
-        x = self.relu(self.batch_norm_4(self.layer_4(x)))
-        action = self.tanh(self.layer_5(x))* self.action_max 
+        x = state
+        # Применение скрытых слоев и нормализации
+        for layer, batch_norm in zip(self.layers, self.batch_norms):
+            x = self.function_a(batch_norm(layer(x)))
+        action = self.tanh(self.output_layer(x)) * self.action_max 
         return action
 
     def save_checkpoint(self):

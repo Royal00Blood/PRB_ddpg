@@ -41,10 +41,9 @@ class Critic(nn.Module):
                 nn.init.kaiming_normal_(layer.weight, mode='fan_out', nonlinearity='relu')
             # Инициализируем смещения
             nn.init.constant_(layer.bias, 0.1)
-
             # # Проверяем, является ли слой PReLU и если да, то инициализируем альфа
-            # if isinstance(layer, nn.LeakyReLU):#nn.PReLU):
-            #     nn.init.constant_(layer.weight, INIT)
+            if isinstance(layer, nn.PReLU):
+                nn.init.constant_(layer.weight, INIT)
                 
     def forward(self, x):
         # Прямое распространение
