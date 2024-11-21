@@ -10,7 +10,8 @@ GAMMA = 0.99   # 0.9 to 0.999
 TAU   = 0.001  # 0.001 to 0.01
 
 LR_A = 0.0001  # 0.0001 to 0.001
-LR_C = 0.001   # 0.001 to 0.01
+LR_C_1 = 0.001   # 0.001 to 0.01
+LR_C_2 = 0.001   # 0.001 to 0.01
 
 WEIGHT_DEC = 0.005 # 0.0001 0.01
 
@@ -45,6 +46,7 @@ TEST_EP_STEPS = 300
 SEED = 10
 REWARD = EP_STEPS * 2
 
+FUNCTION = nn.LeakyReLU
 # Кол нейронов в слоях
     #[ly1, ly2, ly3(v/w), ly4(v/w), ly5(v/w)] 
 L_A  = [250, 300, 400, 500]
@@ -53,4 +55,10 @@ L_C2 = [412, 300, 100, 20 ]
 
 
 DIR_CHEKPOINT = "C:/Users/Ivan/Documents/python_github/PRB_ddpg/chekpoints"
+NAME_CHEKPOINT_A  = "actor_chekpoint"
+NAME_CHEKPOINT_C1 = "critic_chekpoint_1"
+NAME_CHEKPOINT_C2 = "critic_chekpoint_2"
+T_NAME_CHEKPOINT_A  = "T_actor_chekpoint"
+T_NAME_CHEKPOINT_C1 = "T_critic_chekpoint_1"
+T_NAME_CHEKPOINT_C2 = "T_critic_chekpoint_2"
 N_DIC = 1 / (EPISODES * EP_STEPS)
