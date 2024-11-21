@@ -102,20 +102,27 @@ class PRB_DDPG_Agent:
         # Update Critic
         next_action = self.actor_target(next_states)
         next_states_action = torch.cat((next_states,next_action), dim=1)
-        next_q_values = self.critic_target(next_states_action)
-        targets = rewards + (1-dones) * self.gamma * next_q_values
+        next_q_values_1 = self.critic_target_1(next_states_action)
+        next_q_values_2 = self.critic_target_2(next_states_action)
+        targets = rewards + (1-dones) * self.gamma * torch.min(next_q_values_1,next_q_values_2)
         
         # Calcualte error learn
         states_actions = torch.cat((states, actions),dim=1).to(device)
-        critic_loss = torch.mean(weights *(targets.detach() - self.critic(states_actions))**2).to(device)
-        critic_loss.backward()
-        self.critic_optimizer.step()
-        self.critic_optimizer.zero_grad()
+        
+        critic_loss_1 = torch.mean(weights *(targets.detach() - self.critic_1(states_actions))**2).to(device)
+        critic_loss_1.backward()
+        self.critic_optimizer_1.step()
+        self.critic_optimizer_1.zero_grad()
+        
+        critic_loss_2 = torch.mean(weights *(targets.detach() - self.critic_2(states_actions))**2).to(device)
+        critic_loss_2.backward()
+        self.critic_optimizer_2.step()
+        self.critic_optimizer_2.zero_grad()
         
         # Update Actor
         actors_1 = self.actor(states).to(device)
         states_actors_1 = torch.cat((states, actors_1),dim=1).to(device)
-        actor_loss = -torch.mean(weights * self.critic(states_actors_1)).to(device)  # Используем первый критик для обновления актера
+        actor_loss = -torch.mean(weights * self.critic_1(states_actors_1)).to(device)  # Используем первый критик для обновления актера
         actor_loss.backward()
         self.actor_optimizer.step()
         self.actor_optimizer.zero_grad()
@@ -123,25 +130,30 @@ class PRB_DDPG_Agent:
     
         self.update_target_networks()
         # Update Priorities
-        new_priorities = (critic_loss.detach().cpu().numpy()  + 1e-5) / 2
+        new_priorities = (critic_loss_1.detach().cpu().numpy()  + 1e-5) / 2
         self.replay_buffer.update_priority(indices, new_priorities)
         
-        self.writer.add_scalar('Actor Loss'    , actor_loss.item()  , self.global_step)
-        self.writer.add_scalar('Critic Loss'   , critic_loss.item() , self.global_step)
+        self.writer.add_scalar('Actor Loss'      , actor_loss.item()    , self.global_step)
+        self.writer.add_scalar('Critic Loss 1'   , critic_loss_1.item() , self.global_step)
+        self.writer.add_scalar('Critic Loss 2'   , critic_loss_2.item() , self.global_step)
         self.writer.add_scalar('Average Reward', torch.mean(rewards), self.global_step)
         self.global_step += 1
     
     def save_models(self):
         self.actor.save_checkpoint()
         self.actor_target.save_checkpoint()
-        self.critic.save_checkpoint()
-        self.critic_target.save_checkpoint()
+        self.critic_1.save_checkpoint()
+        self.critic_target_1.save_checkpoint()
+        self.critic_2.save_checkpoint()
+        self.critic_target_2.save_checkpoint()
 
     def load_models(self):
         self.actor.load_checkpoint()
         self.actor_target.load_checkpoint()
-        self.critic.load_checkpoint()
-        self.critic_target.load_checkpoint()
+        self.critic_1.load_checkpoint()
+        self.critic_target_1.load_checkpoint()
+        self.critic_2.load_checkpoint()
+        self.critic_target_2.load_checkpoint()
            
     def train(self, env, num_episodes=EPISODES, ep_steps=EP_STEPS):
         # Загрузка весов и моделей для продолжения обучения
@@ -150,9 +162,11 @@ class PRB_DDPG_Agent:
             
         if os.path.exists('actor_weights.pth') and os.path.exists('critic_weights.pth') and os.path.exists('actor_target_weights.pth'):
                 self.actor.load_state_dict(torch.load('actor_weights.pth', weights_only=True))
-                self.critic.load_state_dict(torch.load('critic_weights.pth', weights_only=True))
+                self.critic_1.load_state_dict(torch.load('critic_weights_1.pth', weights_only=True))
+                self.critic_2.load_state_dict(torch.load('critic_weights_2.pth', weights_only=True))
                 self.actor_target.load_state_dict(torch.load('actor_target_weights.pth', weights_only=True))
-                self.critic_target.load_state_dict(torch.load('critic_target_weights.pth', weights_only=True))
+                self.critic_target_1.load_state_dict(torch.load('critic_target_weights.pth', weights_only=True))
+                self.critic_target_2.load_state_dict(torch.load('critic_target_weights.pth', weights_only=True))
                 
         start_time = time.time()
         episode_rewards = []
@@ -186,19 +200,23 @@ class PRB_DDPG_Agent:
             if episode % 5 == 0:
                 # Save model
                 torch.save(self.actor.state_dict()  , 'actor_weights.pth')
-                torch.save(self.critic.state_dict(), 'critic_weights.pth')
+                torch.save(self.critic_1.state_dict(), 'critic_weights_1.pth')
+                torch.save(self.critic_2.state_dict(), 'critic_weights_2.pth')
                 torch.save(self.actor_target.state_dict()  , 'actor_target_weights.pth')
-                torch.save(self.critic_target.state_dict(), 'critic_target_weights.pth')
+                torch.save(self.critic_target_1.state_dict(), 'critic_target_weights_1.pth')
+                torch.save(self.critic_target_2.state_dict(), 'critic_target_weights_2.pth')
                 self.save_models()
                 
         if self.n_treshold>0:
             self.n_treshold = max(0,self.n_treshold-self.n_dic)    
             
         # Сохранение весов и моделей 
-        torch.save(self.actor.state_dict()  ,'actor_weights.pth')
-        torch.save(self.critic.state_dict(),  'critic_weights.pth')
+        torch.save(self.actor.state_dict()  , 'actor_weights.pth')
+        torch.save(self.critic_1.state_dict(), 'critic_weights_1.pth')
+        torch.save(self.critic_2.state_dict(), 'critic_weights_2.pth')
         torch.save(self.actor_target.state_dict()  , 'actor_target_weights.pth')
-        torch.save(self.critic_target.state_dict(), 'critic_target_weights.pth')
+        torch.save(self.critic_target_1.state_dict(), 'critic_target_weights_1.pth')
+        torch.save(self.critic_target_2.state_dict(), 'critic_target_weights_2.pth')
         self.save_models()
         
         self.writer.close()
@@ -218,9 +236,11 @@ class PRB_DDPG_Agent:
         """
         
         self.actor.load_state_dict(torch.load('actor_weights.pth', weights_only=True))
-        self.critic.load_state_dict(torch.load('critic_weights.pth', weights_only=True))
+        self.critic_1.load_state_dict(torch.load('critic_weights_1.pth', weights_only=True))
+        self.critic_2.load_state_dict(torch.load('critic_weights_2.pth', weights_only=True))
         self.actor_target.load_state_dict(torch.load('actor_target_weights.pth', weights_only=True))
-        self.critic_target.load_state_dict(torch.load('critic_target_weights.pth', weights_only=True))
+        self.critic_target_1.load_state_dict(torch.load('critic_target_weights.pth', weights_only=True))
+        self.critic_target_2.load_state_dict(torch.load('critic_target_weights.pth', weights_only=True))
         self.load_models()
        
         rewards = []
