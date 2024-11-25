@@ -27,9 +27,9 @@ A_MAX = 0.5
 S_MAX  = 10.0
 
 #диапазон ограничений поля
-AREA_WIN    = 0.05
+AREA_WIN    = 0
 AREA_DEFEAT = 1.8
-S_G_TARG = AREA_WIN * 4
+S_G_TARG = 0.2
 
 AREA_GENERATION = AREA_DEFEAT - S_G_TARG
 TIME = 0.1
