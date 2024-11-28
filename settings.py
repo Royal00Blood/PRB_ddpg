@@ -27,7 +27,7 @@ A_MAX = 0.5
 S_MAX  = 10.0
 
 #диапазон ограничений поля
-AREA_WIN    = 0
+AREA_WIN    = 0.05
 AREA_DEFEAT = 1.8
 S_G_TARG = 0.2
 
@@ -35,7 +35,7 @@ AREA_GENERATION = AREA_DEFEAT - S_G_TARG
 TIME = 0.1
 
 # Параметры обучения
-EPISODES = 15000
+EPISODES = 20000
 EP_STEPS = 400
 
 #  Параметры проверки
@@ -50,7 +50,7 @@ REWARD = EP_STEPS * 2
 # Кол нейронов в слоях
     #[ly1, ly2, ly3(v/w), ly4(v/w), ly5(v/w)] 
 L_A  = [250, 300, 400, 500]
-L_C1 = [512, 400, 200, 50 ] #[100, 150, 220, 350]
+L_C1 = [512, 400, 200, 50 ] 
 L_C2 = [412, 300, 100, 20 ]
 
 

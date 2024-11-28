@@ -127,7 +127,7 @@ class PRB_DDPG_Agent:
         next_states_action = torch.cat((next_states,next_action), dim=1)
         next_q_values_1 = self.critic_target_1(next_states_action)
         next_q_values_2 = self.critic_target_2(next_states_action)
-        targets = rewards + (1-dones) * self.gamma * torch.min(next_q_values_1,next_q_values_2)
+        targets = rewards + (1-dones) * self.gamma * torch.min(next_q_values_1, next_q_values_2)
         
         # Calcualte error learn
         states_actions = torch.cat((states, actions),dim=1).to(device)
@@ -199,22 +199,22 @@ class PRB_DDPG_Agent:
             done = False
             episode_reward = 0
             env.set_number(episode)
-            
-            
+
             for _ in range(ep_steps):# попробовать обучить при while
             # while not done:
                 if done:
                     break
-                action =self.get_action(state) 
-                next_state, reward, done, _ = env.step(action)
-                
-                self.replay_buffer.push(state, action, reward, next_state, done)
-                if episode % 3 == 0:
-                    if len(self.replay_buffer) > self.batch_size:
-                        self.update()
-                        
-                state = next_state
-                episode_reward += reward
+                else:
+                    action =self.get_action(state) 
+                    next_state, reward, done, _ = env.step(action)
+                    
+                    self.replay_buffer.push(state, action, reward, next_state, done)
+                    if episode % 3 == 0:
+                        if len(self.replay_buffer) > self.batch_size:
+                            self.update()
+                            
+                    state = next_state
+                    episode_reward += reward
             episode_rewards.append(episode_reward)
             avg_reward = np.mean(episode_rewards[-100:])
             

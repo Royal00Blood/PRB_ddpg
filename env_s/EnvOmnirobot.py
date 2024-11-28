@@ -50,13 +50,15 @@ class CustomEnv(gym.Env):
     
     def __calculate_state(self,action):
         # action [v, w] 
-        v = action[0]
-        w = action[1]
+        v_1 = action[0]
+        v_2 = action[1]
+        w = action[2]
+        
         self.__d_angl_rad += (w * TIME)  # изменение угла в радианах
         
         # The position of the robot [x, y]
-        self.__position_robot[0] += v * np.cos(self.__d_angl_rad) * TIME
-        self.__position_robot[1] += v * np.sin(self.__d_angl_rad) * TIME
+        self.__position_robot[0] += (v_1 * np.cos(self.__d_angl_rad) + v_2 * np.sin(self.__d_angl_rad)) * TIME
+        self.__position_robot[1] += (-v_1 * np.sin(self.__d_angl_rad)+ v_2 * np.cos(self.__d_angl_rad)) * TIME
         
         # Quaternions [Qx, Qy, Qz, Qw]
         self.__robot_quat[0] = 0.0
