@@ -50,12 +50,12 @@ REWARD = EP_STEPS * 2
 
 # Кол нейронов в слоях
     #[ly1, ly2, ly3(v/w), ly4(v/w), ly5(v/w)] 
-L_A  = [250, 300, 400, 500]
-L_C1 = [512, 400, 200, 50 ] 
-L_C2 = [412, 300, 100, 20 ]
+L_A  = [250, 300, 400, 500, 512]
+L_C1 = [512, 400, 300, 300, 250, 50 ] 
+L_C2 = [412, 300, 150, 120 ]
 
 
-DIR_CHEKPOINT = "C:/Users/Ivan/Documents/python_github/PRB_ddpg/chekpoints"
+DIR_CHEKPOINT = "chekpoints"
 NAME_CHEKPOINT_A  = "actor_chekpoint"
 NAME_CHEKPOINT_C1 = "critic_chekpoint_1"
 NAME_CHEKPOINT_C2 = "critic_chekpoint_2"
