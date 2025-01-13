@@ -30,12 +30,13 @@ S_MAX  = 10.0
 AREA_WIN    = 0.05
 AREA_DEFEAT = 1.8
 S_G_TARG = 0.2
+ANGL_WIN = 0.02
 
 AREA_GENERATION = AREA_DEFEAT - S_G_TARG
 TIME = 0.1
 
 # Параметры обучения
-EPISODES = 20000
+EPISODES = 10000
 EP_STEPS = 400
 
 #  Параметры проверки

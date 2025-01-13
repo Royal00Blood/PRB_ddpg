@@ -1,6 +1,7 @@
 import numpy as np
 from settings import (S_SIZE, A_SIZE, A_MAX, S_MAX, AREA_DEFEAT, 
-                      AREA_WIN, AREA_GENERATION, TIME, S_G_TARG, REWARD, EP_STEPS)
+                      AREA_WIN, AREA_GENERATION, TIME, S_G_TARG, 
+                      REWARD, EP_STEPS,ANGL_WIN)
 import gym
 import random
 from calculation_scripts.DistanceBW2points import DistanceBW2points as d_dist
@@ -8,10 +9,11 @@ from calculation_scripts.deviation_angle import DeviationAngle as d_ang
 import matplotlib.pyplot as plt
 
 class CustomEnv(gym.Env):
-    def __init__(self,target_point = [0,0]):
+    def __init__(self,target_point = [0,0], angle_target = 0):
         self.action_space      = gym.spaces.Box(low=np.array([-A_MAX] * A_SIZE ), high=np.array([A_MAX] * A_SIZE), dtype=np.float32)
         self.observation_space = gym.spaces.Box(low=np.array([-S_MAX] * S_SIZE ), high=np.array([A_MAX] * S_SIZE), dtype=np.float32)
         self.__target_point= target_point
+        self.__angle_target= angle_target
         self.reset_env()
 
     def reset_env(self):
@@ -28,10 +30,8 @@ class CustomEnv(gym.Env):
     def __reset_robot(self):
         self.__position_robot = np.zeros(2) # The position of the robot [x, y]
         self.__robot_quat     = np.zeros(4) # Quaternions [Qx, Qy, Qz, Qw]
-        # self.__target_point =[random.choice([random.uniform(S_G_TARG, AREA_GENERATION), random.uniform(-AREA_GENERATION,-S_G_TARG)]),
-        #                       random.choice([random.uniform(S_G_TARG, AREA_GENERATION), random.uniform(-AREA_GENERATION,-S_G_TARG)])]
-        # # if self.__target_point != [0,0]:
         self.__target_point =[random.uniform(S_G_TARG, AREA_GENERATION), random.uniform(S_G_TARG, AREA_GENERATION)]    
+        self.__angle_target =[random.uniform(-3.14, 3.14)]
         self.__old_target_point = self.__target_point
         self.__old_position_robot = [0,0]
         
@@ -48,7 +48,7 @@ class CustomEnv(gym.Env):
         self.__reward = self.__new_reward(goal)
         return self.state, self.__reward, self.done, {}
     
-    def __calculate_state(self,action):
+    def __calculate_state(self, action):
         # action [v, w] 
         v_1 = action[0]
         v_2 = action[1]
@@ -105,9 +105,10 @@ class CustomEnv(gym.Env):
             goal = False
             self.done = True
             return goal
-        # elif ( (self.__target_point[0] + AREA_WIN > self.__position_robot[0] > self.__target_point[0] - AREA_WIN )  and
-        #        (self.__target_point[1] + AREA_WIN > self.__position_robot[1] > self.__target_point[1] - AREA_WIN)):
-        elif self.__target_point[0]==self.__position_robot[0] and self.__target_point[1]==self.__position_robot[1]:
+        elif ( ((self.__target_point[0] + AREA_WIN) > self.__position_robot[0] > (self.__target_point[0] - AREA_WIN) )  and
+               ((self.__target_point[1] + AREA_WIN) > self.__position_robot[1] > (self.__target_point[1] - AREA_WIN))and 
+               ((self.__angle_target - ANGL_WIN) < self.__d_angl_rad < (self.__angle_target - ANGL_WIN))):
+            
             goal = True
             self.done = True
             #self.graf_move()
