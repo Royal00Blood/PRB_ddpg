@@ -8,7 +8,6 @@ import os
 from settings import (S_SIZE, A_SIZE, 
                       LR_A, LR_C_1, LR_C_2, 
                       L_A, L_C1, L_C2,
-                      
                       BATCH_SIZE,
                       GAMMA,
                       BUFFER_SIZE,

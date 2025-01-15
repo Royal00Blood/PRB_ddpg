@@ -49,7 +49,7 @@ class CustomEnv(gym.Env):
         return self.state, self.__reward, self.done, {}
     
     def __calculate_state(self, action):
-        # action [v, w] 
+        # action [v_1,v_2, w] 
         v_1 = action[0]
         v_2 = action[1]
         w = action[2]
@@ -61,10 +61,10 @@ class CustomEnv(gym.Env):
         self.__position_robot[1] += (-v_1 * np.sin(self.__d_angl_rad)+ v_2 * np.cos(self.__d_angl_rad)) * TIME
         
         # Quaternions [Qx, Qy, Qz, Qw]
-        self.__robot_quat[0] = 0.0
-        self.__robot_quat[1] = 0.0
-        self.__robot_quat[2] = 1 * np.sin(self.__d_angl_rad / 2)
-        self.__robot_quat[3] = np.cos(self.__d_angl_rad / 2)
+        # self.__robot_quat[0] = 0.0
+        # self.__robot_quat[1] = 0.0
+        # self.__robot_quat[2] = 1 * np.sin(self.__d_angl_rad / 2)
+        # self.__robot_quat[3] = np.cos(self.__d_angl_rad / 2)
         
         self.__x_list.append(self.__position_robot[0])
         self.__y_list.append(self.__position_robot[1])
@@ -82,7 +82,7 @@ class CustomEnv(gym.Env):
             else:
                 return -REWARD
         else:
-            return self.__dist_reward() + self.__angle_reward()- self.__number/EP_STEPS
+            return self.__dist_reward() + self.__angle_reward() + self.__angle_reward_target()#- self.__number/EP_STEPS
                        
     def __dist_reward(self):
         dist_new = d_dist(self.__target_point[0], self.__target_point[1], self.__position_robot[0], self.__position_robot[1]).getDistance()
@@ -97,18 +97,20 @@ class CustomEnv(gym.Env):
                                    self.__d_angl_rad
                                    ).get_angle_dev()
         return -abs(self.__delta_angle)
+    
+    def __angle_reward_target(self):
+        return -abs(self.__angle_target - self.__d_angl_rad)
               
     def __check_done(self):
         goal = False
-        if( - AREA_DEFEAT > self.__position_robot[0] or self.__position_robot[0] > AREA_DEFEAT  or
-            - AREA_DEFEAT > self.__position_robot[1] or self.__position_robot[1] > AREA_DEFEAT):
+        if( (- AREA_DEFEAT > self.__position_robot[0]) or (self.__position_robot[0] > AREA_DEFEAT)  or
+            (- AREA_DEFEAT > self.__position_robot[1]) or (self.__position_robot[1] > AREA_DEFEAT)):
             goal = False
             self.done = True
             return goal
-        elif ( ((self.__target_point[0] + AREA_WIN) > self.__position_robot[0] > (self.__target_point[0] - AREA_WIN) )  and
+        elif ( ((self.__target_point[0] + AREA_WIN) > self.__position_robot[0] > (self.__target_point[0] - AREA_WIN))and
                ((self.__target_point[1] + AREA_WIN) > self.__position_robot[1] > (self.__target_point[1] - AREA_WIN))and 
                ((self.__angle_target - ANGL_WIN) < self.__d_angl_rad < (self.__angle_target - ANGL_WIN))):
-            
             goal = True
             self.done = True
             #self.graf_move()
