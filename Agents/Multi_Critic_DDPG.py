@@ -93,20 +93,14 @@ class PRB_DDPG_Agent:
         action = self.actor(state).detach().cpu().numpy() 
         action_n = action + self.noise.sample()*self.n_treshold
         action = np.clip(a=action_n,a_min = -self.action_max, a_max = self.action_max)
-        return action
-      
-    def update_target_networks(self):
-        """Update the target networks."""
-        self.soft_update(self.actor  , self.actor_target, self.tau)
-        self.soft_update(self.critic_1, self.critic_target_1, self.tau)
-        self.soft_update(self.critic_2, self.critic_target_2, self.tau)
+        return action   
         
     def soft_update(self, source, target, tau):
         """Softly update target network parameters."""
         for target_param, param in zip(target.parameters(), source.parameters()):
             target_param.data.copy_(target_param.data * (1.0 - tau) + param.data * tau)
             
-    def update(self):
+    def update(self,step):
         transitions, indices, weights = self.replay_buffer.sample(self.batch_size)
         if transitions is None:
             return
@@ -140,26 +134,26 @@ class PRB_DDPG_Agent:
         critic_loss_2.backward()
         self.critic_optimizer_2.step()
         self.critic_optimizer_2.zero_grad()
+        if (step + 1) % 3 == 0:
+            # Update Actor
+            actors_1 = self.actor(states).to(device)
+            states_actors_1 = torch.cat((states, actors_1),dim=1).to(device)
+            actor_loss = -torch.mean(weights * self.critic_1(states_actors_1)).to(device)  # Используем первый критик для обновления актера
+            actor_loss.backward()
+            self.actor_optimizer.step()
+            self.actor_optimizer.zero_grad()
+            ##
+            self.writer.add_scalar('Actor Loss'      , actor_loss.item()    , self.global_step)
         
-        # Update Actor
-        actors_1 = self.actor(states).to(device)
-        states_actors_1 = torch.cat((states, actors_1),dim=1).to(device)
-        actor_loss = -torch.mean(weights * self.critic_1(states_actors_1)).to(device)  # Используем первый критик для обновления актера
-        actor_loss.backward()
-        self.actor_optimizer.step()
-        self.actor_optimizer.zero_grad()
-        ##
-    
-        self.update_target_networks()
-        # Update Priorities
-        new_priorities = (critic_loss_1.detach().cpu().numpy()  + 1e-5) / 2
-        self.replay_buffer.update_priority(indices, new_priorities)
-        
-        self.writer.add_scalar('Actor Loss'      , actor_loss.item()    , self.global_step)
         self.writer.add_scalar('Critic Loss 1'   , critic_loss_1.item() , self.global_step)
         self.writer.add_scalar('Critic Loss 2'   , critic_loss_2.item() , self.global_step)
         self.writer.add_scalar('Average Reward', torch.mean(rewards), self.global_step)
         self.global_step += 1
+        # Update Priorities
+        new_priorities = (critic_loss_1.detach().cpu().numpy()  + 1e-5) / 2
+        self.replay_buffer.update_priority(indices, new_priorities)
+        
+        
     
     def save_models(self):
         self.actor.save_checkpoint()
@@ -199,21 +193,24 @@ class PRB_DDPG_Agent:
             episode_reward = 0
             env.set_number(episode)
 
-            for _ in range(ep_steps):# попробовать обучить при while
+            for step in range(ep_steps):# попробовать обучить при while
             # while not done:
                 if done:
                     break
                 else:
                     action =self.get_action(state) 
                     next_state, reward, done, _ = env.step(action)
-                    
                     self.replay_buffer.push(state, action, reward, next_state, done)
-                    if episode % 3 == 0:
-                        if len(self.replay_buffer) > self.batch_size:
-                            self.update()
-                            
+                    if (len(self.replay_buffer) > self.batch_size):
+                        self.update(step)
                     state = next_state
                     episode_reward += reward
+                    
+            if (episode + 1) % 2 == 0:
+                self.soft_update(self.actor  , self.actor_target, self.tau)
+                self.soft_update(self.critic_1, self.critic_target_1, self.tau)
+                self.soft_update(self.critic_2, self.critic_target_2, self.tau)  
+                     
             episode_rewards.append(episode_reward)
             avg_reward = np.mean(episode_rewards[-100:])
             
@@ -228,6 +225,7 @@ class PRB_DDPG_Agent:
                 torch.save(self.critic_target_1.state_dict(), 'critic_target_weights_1.pth')
                 torch.save(self.critic_target_2.state_dict(), 'critic_target_weights_2.pth')
                 self.save_models()
+            
                 
         if self.n_treshold>0:
             self.n_treshold = max(0,self.n_treshold-self.n_dic)    
