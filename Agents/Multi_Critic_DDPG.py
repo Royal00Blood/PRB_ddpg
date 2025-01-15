@@ -153,8 +153,6 @@ class PRB_DDPG_Agent:
         new_priorities = (critic_loss_1.detach().cpu().numpy()  + 1e-5) / 2
         self.replay_buffer.update_priority(indices, new_priorities)
         
-        
-    
     def save_models(self):
         self.actor.save_checkpoint()
         self.actor_target.save_checkpoint()
