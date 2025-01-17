@@ -134,7 +134,7 @@ class PRB_DDPG_Agent:
         critic_loss_2.backward()
         self.critic_optimizer_2.step()
         self.critic_optimizer_2.zero_grad()
-        if (step + 1) % 3 == 0:
+        if (step + 1) % 5 == 0:
             # Update Actor
             actors_1 = self.actor(states).to(device)
             states_actors_1 = torch.cat((states, actors_1),dim=1).to(device)
