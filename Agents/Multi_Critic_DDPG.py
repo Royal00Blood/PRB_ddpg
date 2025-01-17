@@ -100,7 +100,7 @@ class PRB_DDPG_Agent:
         for target_param, param in zip(target.parameters(), source.parameters()):
             target_param.data.copy_(target_param.data * (1.0 - tau) + param.data * tau)
             
-    def update(self,step):
+    def update(self):
         transitions, indices, weights = self.replay_buffer.sample(self.batch_size)
         if transitions is None:
             return
@@ -134,17 +134,15 @@ class PRB_DDPG_Agent:
         critic_loss_2.backward()
         self.critic_optimizer_2.step()
         self.critic_optimizer_2.zero_grad()
-        if (step + 1) % 5 == 0:
-            # Update Actor
-            actors_1 = self.actor(states).to(device)
-            states_actors_1 = torch.cat((states, actors_1),dim=1).to(device)
-            actor_loss = -torch.mean(weights * self.critic_1(states_actors_1)).to(device)  # Используем первый критик для обновления актера
-            actor_loss.backward()
-            self.actor_optimizer.step()
-            self.actor_optimizer.zero_grad()
-            ##
-            self.writer.add_scalar('Actor Loss'      , actor_loss.item()    , self.global_step)
-        
+        # Update Actor
+        actors_1 = self.actor(states).to(device)
+        states_actors_1 = torch.cat((states, actors_1),dim=1).to(device)
+        actor_loss = -torch.mean(weights * self.critic_1(states_actors_1)).to(device)  # Используем первый критик для обновления актера
+        actor_loss.backward()
+        self.actor_optimizer.step()
+        self.actor_optimizer.zero_grad()
+        ##
+        self.writer.add_scalar('Actor Loss'      , actor_loss.item()    , self.global_step)
         self.writer.add_scalar('Critic Loss 1'   , critic_loss_1.item() , self.global_step)
         self.writer.add_scalar('Critic Loss 2'   , critic_loss_2.item() , self.global_step)
         self.writer.add_scalar('Average Reward', torch.mean(rewards), self.global_step)
@@ -200,11 +198,11 @@ class PRB_DDPG_Agent:
                     next_state, reward, done, _ = env.step(action)
                     self.replay_buffer.push(state, action, reward, next_state, done)
                     if (len(self.replay_buffer) > self.batch_size):
-                        self.update(step)
+                        self.update()
                     state = next_state
                     episode_reward += reward
                     
-            if (episode + 1) % 2 == 0:
+            if (episode + 1) % 3 == 0:
                 self.soft_update(self.actor  , self.actor_target, self.tau)
                 self.soft_update(self.critic_1, self.critic_target_1, self.tau)
                 self.soft_update(self.critic_2, self.critic_target_2, self.tau)  
