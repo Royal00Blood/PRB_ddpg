@@ -12,7 +12,7 @@ torch._dynamo.config.suppress_errors = True
 env = env_learn()
 #envesp = env_esp(target_point)
 agent = Agent()
-agent.train(env)
-# agent.test(env,max_episodes=10, max_steps=TEST_EP_STEPS)
+#agent.train(env)
+agent.test(env,max_episodes=100, max_steps=TEST_EP_STEPS)
 #agent.test(envesp,max_episodes=1, max_steps=TEST_EP_STEPS)
 
