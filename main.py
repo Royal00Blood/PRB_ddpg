@@ -1,4 +1,4 @@
-from env_s.EnvCustom import CustomEnv as env_learn
+from env_s.EnvOmnirobot import CustomEnv as env_learn
 #from env_s.EnvESP32 import CustomEnv as env_esp
 from Agents.Multi_Critic_DDPG import PRB_DDPG_Agent as Agent
 from settings import  EPISODES, TEST_EP_STEPS, TEST_EPISODES, S_G_TARG, AREA_GENERATION

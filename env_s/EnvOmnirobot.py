@@ -31,7 +31,7 @@ class CustomEnv(gym.Env):
         self.__position_robot = np.zeros(2) # The position of the robot [x, y]
         self.__robot_quat     = np.zeros(4) # Quaternions [Qx, Qy, Qz, Qw]
         self.__target_point =[random.uniform(S_G_TARG, AREA_GENERATION), random.uniform(S_G_TARG, AREA_GENERATION)]    
-        self.__angle_target =[random.uniform(-3.14, 3.14)]
+        self.__angle_target = np.array([random.uniform(-3.14, 3.14)])[0]
         self.__old_target_point = self.__target_point
         self.__old_position_robot = [0,0]
         
@@ -69,7 +69,7 @@ class CustomEnv(gym.Env):
         self.__x_list.append(self.__position_robot[0])
         self.__y_list.append(self.__position_robot[1])
         self.__angle_list.append(self.__d_angl_rad)
-        
+       
         return [self.__position_robot[0] , self.__position_robot[1],
                 self.__target_point[0]   , self.__target_point[1]  ,
                 self.__d_angl_rad]
@@ -86,8 +86,9 @@ class CustomEnv(gym.Env):
                ((self.__target_point[1] + AREA_WIN) > self.__position_robot[1] > (self.__target_point[1] - AREA_WIN))):
                 return self.__dist_reward() + self.__angle_reward() + self.__angle_reward_target()
             else:
-                return self.__dist_reward() + self.__angle_reward()+ self.__angle_reward_target()
-                       
+                reward = self.__dist_reward() + self.__angle_reward()#+ self.__angle_reward_target()
+                return  reward   
+             
     def __dist_reward(self):
         dist_new = d_dist(self.__target_point[0], self.__target_point[1], self.__position_robot[0], self.__position_robot[1]).getDistance()
         dist_old = d_dist(self.__old_target_point[0], self.__old_target_point[1], self.__old_position_robot[0], self.__old_position_robot[1]).getDistance()
@@ -103,7 +104,7 @@ class CustomEnv(gym.Env):
         return -abs(self.__delta_angle)
     
     def __angle_reward_target(self):
-        return -abs(self.__angle_target - self.__d_angl_rad)
+        return -abs(self.__angle_target[0] - self.__d_angl_rad)
               
     def __check_done(self):
         goal = False
@@ -113,8 +114,8 @@ class CustomEnv(gym.Env):
             self.done = True
             return goal
         elif ( ((self.__target_point[0] + AREA_WIN) > self.__position_robot[0] > (self.__target_point[0] - AREA_WIN))and
-               ((self.__target_point[1] + AREA_WIN) > self.__position_robot[1] > (self.__target_point[1] - AREA_WIN))and 
-               ((self.__angle_target - ANGL_WIN) < self.__d_angl_rad < (self.__angle_target - ANGL_WIN))):
+               ((self.__target_point[1] + AREA_WIN) > self.__position_robot[1] > (self.__target_point[1] - AREA_WIN))):#and 
+               #((self.__angle_target() - ANGL_WIN) < self.__d_angl_rad < (self.__angle_target() - ANGL_WIN))):
             goal = True
             self.done = True
             #self.graf_move()
