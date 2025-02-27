@@ -13,7 +13,38 @@ import socket
 import struct
 import time
 import math
-import bluetooth
+
+from bleak import BleakClient
+import asyncio
+
+# Replace this with your BLE device's address
+DEVICE_ADDRESS = "XX:XX:XX:XX:XX:XX"
+
+async def connect_to_device(address):
+    try:
+        # Create a BleakClient object
+        async with BleakClient(address) as client:
+            print(f"Connected to {address}")
+
+            # Check if the connection is successful
+            if client.is_connected:
+                print("Device is connected!")
+
+                # Example: Read a specific characteristic
+                # Replace with the UUID of the characteristic you want to read
+                CHARACTERISTIC_UUID = "00002a00-0000-1000-8000-00805f9b34fb"
+                value = await client.read_gatt_char(CHARACTERISTIC_UUID)
+                print(f"Value of characteristic {CHARACTERISTIC_UUID}: {value}")
+
+                # Example: Write to a specific characteristic
+                # Replace with the UUID of the characteristic you want to write to
+                # WRITE_UUID = "00002a01-0000-1000-8000-00805f9b34fb"
+                # await client.write_gatt_char(WRITE_UUID, b"your_data_here")
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+
 
 A = 0.0835
 B = 0.153
@@ -28,7 +59,6 @@ c_4 = [A, -B]
 
 k = 360 * n / (2 * math.PI);
 start_byte = 50
-sockBL = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
 port = 1
 
 BUFFER_SIZE = 4096
@@ -56,12 +86,12 @@ class CustomEnv(gym.Env):
         self.target_address = input("Введите адрес устройства для подключения: ")  
         self.reset_env()
 
-    def find_devices(self):
-        print("Ищем устройства...")
-        devices = bluetooth.discover_devices(duration=8, lookup_names=True)
-        print("Найденные устройства:")
-        for addr, name in devices:
-            print(f"{name} - {addr}")
+    # def find_devices(self):
+    #     print("Ищем устройства...")
+    #     devices = bluetooth.discover_devices(duration=8, lookup_names=True)
+    #     print("Найденные устройства:")
+    #     for addr, name in devices:
+    #         print(f"{name} - {addr}")
         
     def reset_env(self):
         self.state = np.zeros(S_SIZE) # [position robot_x , position robot_y, 
@@ -155,23 +185,7 @@ class CustomEnv(gym.Env):
         else:
             dir4 = 2
             vel_4 = -vel_4
-        try:
-            # Подключаемся к устройству
-            sockBL.connect((target_address, port))
-            print("Соединение установлено")
-
-            # Отправляем данные
-            data = start_byte, dir1, vel_1, dir2, vel_2, dir3, vel_3, dir4, vel_4
-            sockBL.send(data)
-            print("Данные отправлены")
-
-        except bluetooth.btcommon.BluetoothError as e:
-            print(f"Ошибка Bluetooth: {e}")
-
-        finally:
-            # Закрываем сокет
-            sockBL.close()
-            print("Соединение закрыто")    
+        asyncio.run(connect_to_device(DEVICE_ADDRESS))
         
         
         
