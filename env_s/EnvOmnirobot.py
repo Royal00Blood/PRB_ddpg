@@ -40,7 +40,7 @@ class CustomEnv(gym.Env):
         
     def step(self, action):
         # Применяем действие к состоянию и получаем новое состояние
-        # action [v, w]
+        # action [v1,v2, w]
         self.state = self.__calculate_state(action)
         # Проверяем, завершен ли эпизод
         goal = self.__check_done()
